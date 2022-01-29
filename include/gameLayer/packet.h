@@ -19,7 +19,8 @@ enum
 	headerReceiveCID,
 	headerAnounceConnection,
 	headerUpdateConnection,
+	headerAnounceDisconnect,
 };
 
-void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size);
+void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reliable = true);
 char *parsePacket(ENetEvent &event, Packet &p, size_t &dataSize);

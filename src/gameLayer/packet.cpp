@@ -16,7 +16,7 @@
 //	}
 //}
 
-void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size)
+void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reliable)
 {
 
 	//resize(size + sizeof(Packet));
@@ -32,7 +32,18 @@ void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size)
 		memcpy(dataPool + sizeof(Packet), data, size);
 	}
 
-	ENetPacket *packet = enet_packet_create(dataPool, size + sizeof(Packet), ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT);
+	size_t flag = 0;
+
+	if (reliable)
+	{
+		flag = ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
+	}
+	else
+	{
+		flag = ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
+	}
+
+	ENetPacket *packet = enet_packet_create(dataPool, size + sizeof(Packet), flag);
 	enet_peer_send(to, 0, packet);
 	//channel 0
 	//enet_packet_destroy(packet);

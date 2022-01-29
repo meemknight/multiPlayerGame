@@ -58,10 +58,25 @@ void addConnection(ENetHost *server, ENetEvent &event)
 
 void removeConnection(ENetHost *server, ENetEvent &event)
 {
+
+
 	for (auto it = connections.begin(); it != connections.end(); it++)
 	{
 		if (it->second.peer == event.peer)
 		{
+
+			//broadcast disconnect
+			Packet sPacket;
+			sPacket.header = headerAnounceDisconnect;
+			sPacket.cid = it->first;
+			for (auto it = connections.begin(); it != connections.end(); it++)
+			{
+				if (it->second.peer != event.peer)
+				{
+					sendPacket(it->second.peer, sPacket, nullptr, 0);
+				}
+			}
+
 			enet_peer_disconnect(event.peer, 0);
 			connections.erase(it);
 			break;
@@ -115,7 +130,7 @@ void recieveData(ENetHost *server, ENetEvent &event)
 		{
 			if (it->second.peer != event.peer)
 			{
-				sendPacket(it->second.peer, sPacket, (const char*)(data), sizeof(phisics::Entity));
+				sendPacket(it->second.peer, sPacket, (const char*)(data), sizeof(phisics::Entity), false);
 			}
 		}
 	}
@@ -191,7 +206,6 @@ void serverFunction()
 		}
 
 	}
-
 
 	enet_host_destroy(server);
 

@@ -135,6 +135,10 @@ void msgLoop(ENetHost *client)
 
 					players[p.cid] = *(phisics::Entity *)data;
 
+				}else if (p.header == headerAnounceDisconnect)
+				{
+					auto find = players.find(p.cid);
+					players.erase(find);
 				}
 
 				enet_packet_destroy(event.packet);
@@ -144,7 +148,7 @@ void msgLoop(ENetHost *client)
 			case ENET_EVENT_TYPE_DISCONNECT:
 			{
 				//std::cout << "disconect\n";
-
+				exit(0);
 
 				break;
 			}
@@ -221,17 +225,21 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 
 		auto &player = players[cid];
 		player.move({posx, posy});
-		
+
+
 		for (auto &i : players)
 		{
 			i.second.resolveConstrains(map);
 			i.second.updateMove();
 
-			i.second.draw(renderer, deltaTime, {});
-
 		}
 
 		renderer.currentCamera.follow(player.pos * worldMagnification, deltaTime * 100, 2, renderer.windowW, renderer.windowH);
+
+		for (auto &i : players)
+		{
+			i.second.draw(renderer, deltaTime, {});
+		}
 
 
 	#pragma endregion
@@ -239,7 +247,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 		Packet p;
 		p.cid = cid;
 		p.header = headerUpdateConnection;
-		sendPacket(server, p, (const char *)&player, sizeof(phisics::Entity));
+		sendPacket(server, p, (const char *)&player, sizeof(phisics::Entity), true);
 
 	}
 
