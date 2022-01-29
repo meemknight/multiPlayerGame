@@ -88,17 +88,14 @@ bool gameLogic(float deltaTime)
 	}
 	else if (state == 1)
 	{
-		clientFunction(deltaTime, renderer, sprites);
+		clientFunction(deltaTime, renderer, sprites, ip);
 	}
 	else if (state == 2)
 	{
-		clientFunction(deltaTime, renderer, sprites);
+		clientFunction(deltaTime, renderer, sprites, ip);
 
 
 	}
-
-
-
 
 
 	

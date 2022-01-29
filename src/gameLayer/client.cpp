@@ -35,13 +35,19 @@ void resetClient()
 }
 
 
-bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::string userName)
+bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::string ip)
 {
 	ENetAddress adress;
 	ENetEvent event;
 
-
-	enet_address_set_host(&adress, "127.0.0.1");
+	if (ip.empty())
+	{
+		enet_address_set_host(&adress, "127.0.0.1");
+	}
+	else
+	{
+		enet_address_set_host(&adress, ip.c_str());
+	}
 	//enet_address_set_host(&adress, "95.76.249.14");
 	//enet_address_set_host(&adress, "192.168.1.11");
 	adress.port = 7777;
@@ -102,7 +108,7 @@ bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::st
 	//	sendPacket(server, {headerClientSendName, cid}, userName.c_str(), userName.size() + 1);
 	//}
 
-
+	return true;
 }
 
 void msgLoop(ENetHost *client)
@@ -159,7 +165,7 @@ void msgLoop(ENetHost *client)
 
 
 
-void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture sprites)
+void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture sprites, std::string ip)
 {
 
 	if (!joined)
@@ -169,7 +175,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 			client = enet_host_create(nullptr, 1, 1, 0, 0);
 		}
 
-		if (connectToServer(client, server, cid, "vlod"))
+		if (connectToServer(client, server, cid, ip))
 		{
 			joined = true;
 		}

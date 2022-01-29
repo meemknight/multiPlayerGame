@@ -6,5 +6,5 @@
 
 void serverFunction();
 
-void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture sprites);
+void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture sprites, std::string ip);
 void resetClient();
