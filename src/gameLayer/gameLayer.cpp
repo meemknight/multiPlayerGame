@@ -4,27 +4,31 @@
 #include "imgui.h"
 #include <iostream>
 #include <sstream>
+#include "Phisics.h"
 
 gl2d::Renderer2D renderer;
 
 gl2d::Font font;
-gl2d::Texture texture;
+gl2d::Texture sprites;
 
 struct GameData
 {
-	float posx=100;
-	float posy=100;
-
-	int test = 0;
+	phisics::Entity player;
 
 }gameData;
 
+phisics::MapData map;
 
 bool initGame()
 {
 	renderer.create();
 	font.createFromFile(RESOURCES_PATH "roboto_black.ttf");
-	texture.loadFromFile(RESOURCES_PATH "test.jpg");
+	sprites.loadFromFileWithPixelPadding(RESOURCES_PATH "jawbreaker_tiles.png", tiles::pixelSize, true, true);
+
+	if (!map.load(RESOURCES_PATH "mapData.txt"))
+	{
+		return false;
+	}
 
 	if(!platform::readEntireFile(RESOURCES_PATH "gameData.data", &gameData, sizeof(GameData)))
 	{
@@ -47,70 +51,79 @@ bool gameLogic(float deltaTime)
 
 
 #pragma region input
-	float speed = 400 * deltaTime;
+	float speed = 10 * deltaTime;
+	float posy = 0;
+	float posx = 0;
 
 	if(platform::isKeyHeld(platform::Button::Up) 
 		|| platform::getControllerButtons().buttons[platform::ControllerButtons::Up].held
 		)
 	{
-		gameData.posy -= speed;
+		posy -= speed;
 	}
 	if (platform::isKeyHeld(platform::Button::Down)
 		|| platform::getControllerButtons().buttons[platform::ControllerButtons::Down].held
 		)
 	{
-		gameData.posy += speed;
+		posy += speed;
 	}
 	if (platform::isKeyHeld(platform::Button::Left)
 		|| platform::getControllerButtons().buttons[platform::ControllerButtons::Left].held
 		)
 	{
-		gameData.posx -= speed;
+		posx -= speed;
 	}
 	if (platform::isKeyHeld(platform::Button::Right)
 		|| platform::getControllerButtons().buttons[platform::ControllerButtons::Right].held
 		)
 	{
-		gameData.posx += speed;
+		posx += speed;
 	}
-
-	if (platform::isKeyTyped(platform::Button::NR1)
-		)
-	{
-		gameData.test -= 1;
-	}
-	if (platform::isKeyTyped(platform::Button::NR2)
-		)
-	{
-		gameData.test += 1;
-	}
-
 
 	if (platform::isKeyPressedOn(platform::Button::Enter))
 	{
 		platform::setFullScreen(!platform::isFullScreen());
 	}
+
+
 #pragma endregion
 
-	glm::vec4 colors[4] = { Colors_Orange, Colors_Orange, Colors_Orange, Colors_Orange };
+	map.render(renderer, sprites);
 
-	{
-		colors[0].r = platform::getControllerButtons().LT;
-		colors[1].r = platform::getControllerButtons().RT;
-		colors[2].r = platform::getControllerButtons().LStick.x;
-		colors[3].r = platform::getControllerButtons().RStick.y;
-	}
 
-	renderer.renderRectangle({ 10,10, 100, 100 }, colors, {}, 30);
+#pragma region player
+
+	gameData.player.move({posx, posy});
+	gameData.player.resolveConstrains(map);
+	gameData.player.updateMove();
+
+	renderer.currentCamera.follow(gameData.player.pos * worldMagnification, deltaTime * 100, 2, w, h);
+
+	gl2d::Texture none;
+	none.id = 0;
+
+	gameData.player.draw(renderer, deltaTime, none);
+
+#pragma endregion
+
+#pragma region imgui
+
+	ImGui::Begin("debug");
+
+	ImGui::InputFloat2("player", &gameData.player.pos.x);
+
+
+	ImGui::End();
+
+		
+#pragma endregion
+
+
+
+
+
 
 	
-	renderer.renderRectangle({ gameData.posx,gameData.posy, 100, 100 }, { 0,0 }, 0, texture);
-
-	renderer.renderText({10,200}, std::to_string(gameData.test).c_str(), font, Colors_White, 1.5, 4.0, 3, false);
-
-	//ImGui::ShowDemoWindow();
-
-	std::cout << platform::getTypedInput();
 
 #pragma region set finishing stuff
 	renderer.flush();

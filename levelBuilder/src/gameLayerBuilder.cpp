@@ -107,7 +107,6 @@ bool gameLogic(float deltaTime)
 	
 #pragma region mouse picking
 
-	
 	auto mousePos = platform::getRelMousePosition();
 	mousePos += renderer.currentCamera.position;
 	mousePos /= worldMagnification;
@@ -224,10 +223,6 @@ bool gameLogic(float deltaTime)
 
 
 #pragma endregion
-
-
-
-
 
 	
 	map.render(renderer, sprites);

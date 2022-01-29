@@ -45,10 +45,10 @@ namespace phisics
 	
 	struct Entity
 	{
-		glm::vec2 pos;
-		glm::vec2 lastPos;
+		glm::vec2 pos = {};
+		glm::vec2 lastPos = {};
 	
-		glm::vec2 dimensions;
+		glm::vec2 dimensions = {0.9,0.9};
 	
 		void resolveConstrains(MapData& mapData);
 	
