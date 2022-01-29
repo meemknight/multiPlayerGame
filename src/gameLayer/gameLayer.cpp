@@ -5,38 +5,35 @@
 #include <iostream>
 #include <sstream>
 #include "Phisics.h"
+#include <enet/enet.h>
+#include "glui/glui.h"
+#include "serverClient.h"
+#include <thread>
 
 gl2d::Renderer2D renderer;
 
 gl2d::Font font;
 gl2d::Texture sprites;
 
-struct GameData
-{
-	phisics::Entity player;
-
-}gameData;
-
-phisics::MapData map;
 
 bool initGame()
 {
 	renderer.create();
-	font.createFromFile(RESOURCES_PATH "roboto_black.ttf");
+	font.createFromFile(RESOURCES_PATH "font/ANDYB.TTF");
 	sprites.loadFromFileWithPixelPadding(RESOURCES_PATH "jawbreaker_tiles.png", tiles::pixelSize, true, true);
 
-	if (!map.load(RESOURCES_PATH "mapData.txt"))
+	glui::gluiInit();
+
+	if (enet_initialize() != 0)
 	{
 		return false;
 	}
 
-	if(!platform::readEntireFile(RESOURCES_PATH "gameData.data", &gameData, sizeof(GameData)))
-	{
-		gameData = GameData();
-	}
-
 	return true;
 }
+
+
+
 
 bool gameLogic(float deltaTime)
 {
@@ -50,74 +47,55 @@ bool gameLogic(float deltaTime)
 #pragma endregion
 
 
-#pragma region input
-	float speed = 10 * deltaTime;
-	float posy = 0;
-	float posx = 0;
+	//0 main menu
+	//1 client
+	//2 server
+	static int state = 0;
+	static char ip[17];	
 
-	if(platform::isKeyHeld(platform::Button::Up) 
-		|| platform::getControllerButtons().buttons[platform::ControllerButtons::Up].held
-		)
+	if (state == 0)
 	{
-		posy -= speed;
+		glui::Text("Multi player game", Colors_White);
+		glui::BeginMenu("Host server", glm::vec4(0, 0, 0, 0), {});
+			glui::Text("current ip: ", Colors_White);
+			if (glui::Button("start", glm::vec4(0, 0, 0, 0)))
+			{
+				std::thread t(serverFunction);
+				t.detach();
+				resetClient();
+				state = 2;
+			}
+		glui::EndMenu();
+		glui::BeginMenu("Join server", glm::vec4(0, 0, 0, 0), {});
+			glui::Text("enter ip: ", Colors_White);
+			glui::InputText("input ip", ip, sizeof(ip));
+			if (glui::Button("join", glm::vec4(0, 0, 0, 0)))
+			{
+				resetClient();
+				state = 1;
+			}
+		glui::EndMenu();
+
+		if (glui::Button("Exit", glm::vec4(0, 0, 0, 0)))
+		{
+			return 0;
+		}
+
+		glui::renderFrame(renderer, font, platform::getRelMousePosition(),
+			platform::isLMousePressed(), platform::isLMouseHeld(), platform::isLMouseReleased(),
+			platform::isKeyReleased(platform::Button::Escape), platform::getTypedInput(), deltaTime);
+
 	}
-	if (platform::isKeyHeld(platform::Button::Down)
-		|| platform::getControllerButtons().buttons[platform::ControllerButtons::Down].held
-		)
+	else if (state == 1)
 	{
-		posy += speed;
+		clientFunction(deltaTime, renderer, sprites);
 	}
-	if (platform::isKeyHeld(platform::Button::Left)
-		|| platform::getControllerButtons().buttons[platform::ControllerButtons::Left].held
-		)
+	else if (state == 2)
 	{
-		posx -= speed;
+		clientFunction(deltaTime, renderer, sprites);
+
+
 	}
-	if (platform::isKeyHeld(platform::Button::Right)
-		|| platform::getControllerButtons().buttons[platform::ControllerButtons::Right].held
-		)
-	{
-		posx += speed;
-	}
-
-	if (platform::isKeyPressedOn(platform::Button::Enter))
-	{
-		platform::setFullScreen(!platform::isFullScreen());
-	}
-
-
-#pragma endregion
-
-	map.render(renderer, sprites);
-
-
-#pragma region player
-
-	gameData.player.move({posx, posy});
-	gameData.player.resolveConstrains(map);
-	gameData.player.updateMove();
-
-	renderer.currentCamera.follow(gameData.player.pos * worldMagnification, deltaTime * 100, 2, w, h);
-
-	gl2d::Texture none;
-	none.id = 0;
-
-	gameData.player.draw(renderer, deltaTime, none);
-
-#pragma endregion
-
-#pragma region imgui
-
-	ImGui::Begin("debug");
-
-	ImGui::InputFloat2("player", &gameData.player.pos.x);
-
-
-	ImGui::End();
-
-		
-#pragma endregion
-
 
 
 
@@ -135,7 +113,5 @@ bool gameLogic(float deltaTime)
 
 void closeGame()
 {
-
-	platform::writeEntireFile(RESOURCES_PATH "gameData.data", &gameData, sizeof(GameData));
 
 }

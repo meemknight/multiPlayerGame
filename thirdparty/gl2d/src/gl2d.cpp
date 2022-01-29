@@ -1599,6 +1599,8 @@ namespace gl2d
 
 	void Texture::loadFromFile(const char *fileName, bool pixelated, bool useMipMaps)
 	{
+		if (!fileName) { return; };
+
 		std::ifstream file(fileName, std::ios::binary);
 
 		if (!file.is_open())

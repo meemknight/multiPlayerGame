@@ -27,6 +27,8 @@ namespace phisics
 		bool rightTouch = 0;
 
 		float distance = glm::length(lastPos - pos);
+		if (distance == 0 || distance == INFINITY) { return; }
+
 		const float BLOCK_SIZE = mapData.BLOCK_SIZE;
 
 		if (distance < BLOCK_SIZE)

@@ -452,7 +452,7 @@ namespace glui
 
 					if (hovered && widget.colors.a <= 0.01f)
 					{
-						textColor = stepColorDown(textColor, 0.8);
+						textColor = stepColorDown(textColor, 0.6);
 					}
 
 					if (input.mouseReleased && aabb(aabbTransform, input.mousePos))
@@ -528,7 +528,7 @@ namespace glui
 
 						if (hovered)
 						{
-							renderText(renderer, j.first, font, textTransform, stepColorDown(Colors_White, 0.8),
+							renderText(renderer, j.first, font, textTransform, stepColorDown(Colors_White, 0.6),
 								true, false);
 						}
 						else
