@@ -25,7 +25,7 @@ namespace tiles
 	glm::vec4 getTileUV(int id)
 	{
 		int x = id % width;
-		int y = id / height;
+		int y = id / width;
 		return textureAtlas.get(x, y);
 	}
 

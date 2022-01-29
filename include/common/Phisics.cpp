@@ -1,6 +1,5 @@
 #include "Phisics.h"
-
-constexpr float worldMagnification = 64;
+#include <safeSave.h>
 
 namespace phisics
 {
@@ -263,6 +262,36 @@ namespace phisics
 
 		w = 0;
 		h = 0;
+	}
+
+	bool MapData::load(const char *file)
+	{
+		std::vector<char> data;
+		auto err = sfs::readEntireFile(data, file);
+		
+		if (err != sfs::Errors::noError)
+		{
+			return 0;
+		}
+		
+		char w = data[0];
+		char h = data[1];
+		
+		create(w, h, &data[2]);
+		return 1;
+	}
+
+	void MapData::save(const char *file)
+	{
+		char *buff = new char[w * h + 2];
+		buff[0] = w;
+		buff[1] = h;
+
+		memcpy(buff + 2, data, w * h);
+
+		sfs::writeEntireFile(buff, w * h + 2, file);
+
+		delete buff;
 	}
 
 	bool BlockInfo::isCollidable()

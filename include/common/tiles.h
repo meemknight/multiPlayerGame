@@ -6,7 +6,7 @@ namespace tiles
 
 	constexpr int width = 8;
 	constexpr int height = 9;
-	constexpr int tilesCount = 68;
+	constexpr int tilesCount = 72;
 	constexpr int pixelSize = 8;
 
 	bool isSolid(int id);

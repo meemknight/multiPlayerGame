@@ -281,7 +281,7 @@ int main()
 
 #ifdef _WIN32
 #ifdef _MSC_VER 
-#if INTERNAL_BUILD
+#if INTERNAL_BUILD && ALLOC_CONSOLE
 	AllocConsole();
 	(void)freopen("conin$", "r", stdin);
 	(void)freopen("conout$", "w", stdout);

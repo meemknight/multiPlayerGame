@@ -8,6 +8,8 @@
 #undef min
 #undef max
 
+constexpr float worldMagnification = 48;
+
 namespace phisics
 {
 	
@@ -37,7 +39,8 @@ namespace phisics
 
 		void cleanup();
 	
-	
+		bool load(const char *file);
+		void save(const char *file);
 	};
 	
 	struct Entity

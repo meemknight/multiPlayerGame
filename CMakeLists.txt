@@ -17,6 +17,7 @@ add_subdirectory(thirdparty/glm)
 add_subdirectory(thirdparty/imgui-docking)
 add_subdirectory(thirdparty/glUI)
 add_subdirectory(thirdparty/enet-1.3.17)
+add_subdirectory(thirdparty/safeSave)
 
 
 # Define MY_SOURCES to be a list of all the source files for my game 
@@ -47,7 +48,7 @@ target_include_directories(multyPlayer PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/inclu
 target_include_directories(multyPlayer PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/platform/")
 
 
-target_link_libraries(multyPlayer PRIVATE glm glfw glad stb_image stb_truetype gl2d raudio imgui glui enet)
+target_link_libraries(multyPlayer PRIVATE glm glfw glad stb_image stb_truetype gl2d raudio imgui glui enet safeSave)
 
 # #########################
 
@@ -82,4 +83,4 @@ if(MSVC) # If using the VS compiler...
 
 endif()
 
-target_link_libraries(levelBuilder PRIVATE glm glfw glad stb_image stb_truetype gl2d raudio imgui glui enet)
+target_link_libraries(levelBuilder PRIVATE glm glfw glad stb_image stb_truetype gl2d raudio imgui glui enet safeSave)
