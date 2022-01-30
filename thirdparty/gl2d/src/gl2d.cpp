@@ -458,7 +458,7 @@ namespace gl2d
 			const stbtt_aligned_quad  q = internal::fontGetGlyphQuad(*this, c);
 			const float               m = q.y1 - q.y0;
 
-			if (m > max_height)
+			if (m > max_height && m < 1.e+8f)
 			{
 				max_height = m;
 			}
@@ -1113,7 +1113,7 @@ namespace gl2d
 		glm::vec2 position = {};
 
 		const int text_length = (int)strlen(text);
-		Rect rectangle;
+		Rect rectangle = {};
 		rectangle.x = position.x;
 		float linePositionY = position.y;
 

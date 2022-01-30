@@ -163,6 +163,32 @@ void msgLoop(ENetHost *client)
 
 }
 
+void closeFunction()
+{
+	if (!server) { return; }
+
+	ENetEvent event;
+
+	enet_peer_disconnect(server, 0);
+	//wait for disconect
+	while (enet_host_service(client, &event, 10) > 0)
+	{
+		switch (event.type)
+		{
+			case ENET_EVENT_TYPE_RECEIVE:
+			{
+				enet_packet_destroy(event.packet);
+				break;
+			}
+			case ENET_EVENT_TYPE_DISCONNECT:
+			{
+				break;
+			}
+		}
+	}
+
+
+}
 
 
 void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture sprites, std::string ip)
@@ -224,7 +250,6 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 
 	#pragma endregion
 
-		map.render(renderer, sprites);
 
 
 	#pragma region player
@@ -241,6 +266,8 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 		}
 
 		renderer.currentCamera.follow(player.pos * worldMagnification, deltaTime * 100, 2, renderer.windowW, renderer.windowH);
+
+		map.render(renderer, sprites);
 
 		for (auto &i : players)
 		{

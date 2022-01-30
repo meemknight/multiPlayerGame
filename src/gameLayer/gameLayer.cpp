@@ -51,13 +51,13 @@ bool gameLogic(float deltaTime)
 	//1 client
 	//2 server
 	static int state = 0;
-	static char ip[17];	
-
+	static char ip[17] = {};
+	
 	if (state == 0)
 	{
 		glui::Text("Multi player game", Colors_White);
 		glui::BeginMenu("Host server", glm::vec4(0, 0, 0, 0), {});
-			glui::Text("current ip: ", Colors_White);
+			//glui::Text(currentIPString.c_str(), Colors_White);
 			if (glui::Button("start", glm::vec4(0, 0, 0, 0)))
 			{
 				std::thread t(serverFunction);
@@ -97,9 +97,7 @@ bool gameLogic(float deltaTime)
 
 	}
 
-
 	
-
 #pragma region set finishing stuff
 	renderer.flush();
 
@@ -110,5 +108,10 @@ bool gameLogic(float deltaTime)
 
 void closeGame()
 {
+
+	closeServer();
+	std::this_thread::sleep_for(std::chrono::milliseconds(250));
+	closeFunction();
+
 
 }

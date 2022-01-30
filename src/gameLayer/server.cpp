@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include "packet.h"
 #include "phisics.h"
+#include <atomic>
 
 struct Client
 {
@@ -154,9 +155,16 @@ void recieveData(ENetHost *server, ENetEvent &event)
 
 }
 
+std::atomic_bool serverOpen;
+
+void closeServer()
+{
+	serverOpen = false;
+}
 
 void serverFunction()
 {
+	serverOpen = true;
 
 	ENetAddress adress;
 	adress.host = ENET_HOST_ANY;
@@ -172,41 +180,40 @@ void serverFunction()
 	}
 
 
-	while (true)
+	while (serverOpen)
 	{
 
-		while (enet_host_service(server, &event, 1000) > 0)
+		while (enet_host_service(server, &event, 200) > 0 && serverOpen)
 		{
 
 			switch (event.type)
 			{
-			case ENET_EVENT_TYPE_CONNECT:
-			{
-				addConnection(server, event);
+				case ENET_EVENT_TYPE_CONNECT:
+				{
+					addConnection(server, event);
 
-				break;
-			}
-			case ENET_EVENT_TYPE_RECEIVE:
-			{
-				recieveData(server, event);
+					break;
+				}
+				case ENET_EVENT_TYPE_RECEIVE:
+				{
+					recieveData(server, event);
 
-				break;
+					break;
+				}
+				case ENET_EVENT_TYPE_DISCONNECT:
+				{
+					//std::cout << "disconnect: "
+					//	<< event.peer->address.host << " "
+					//	<< event.peer->address.port << "\n\n";
+					removeConnection(server, event);
+					break;
+				}
 			}
-			case ENET_EVENT_TYPE_DISCONNECT:
-			{
-				//std::cout << "disconnect: "
-				//	<< event.peer->address.host << " "
-				//	<< event.peer->address.port << "\n\n";
-				removeConnection(server, event);
-				break;
-			}
-			}
-
 
 		}
 
 	}
-
+	
 	enet_host_destroy(server);
 
 
