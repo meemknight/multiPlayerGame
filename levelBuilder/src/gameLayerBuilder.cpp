@@ -32,26 +32,14 @@ bool initGame()
 		gameData = GameData();
 	}
 
-	if (!map.load(RESOURCES_PATH "mapData.txt"))
+	if (!map.load(RESOURCES_PATH "mapData2.txt"))
 	{
-		char mapInfo[] =
-			"bbbbbbbbbb"
-			"baaaaaaaab"
-			"baaaaaaaab"
-			"baaaaaaaab"
-			"baaaaaaaab"
-			"baaaaaaaab"
-			"baaaaaaaab"
-			"baaaaaaaab"
-			"baaaaaaaab"
-			"bbbbbbbbbb";
+		char mapInfo[50 * 50] = {};
+		//for (int i = 0; i < sizeof(mapInfo); i++)
+		//{
+		//}
 
-		for (int i = 0; i < sizeof(mapInfo); i++)
-		{
-			mapInfo[i] -= 'a';
-		}
-
-		map.create(10, 10, mapInfo);
+		map.create(50, 50, mapInfo);
 	}
 	
 
@@ -218,7 +206,16 @@ bool gameLogic(float deltaTime)
 
 	if (!inImgui && platform::isLMouseHeld())
 	{
-		clickedBlock.type = currentBlock;
+		if (platform::isKeyHeld(platform::Button::LeftCtrl))
+		{
+
+			currentBlock = clickedBlock.type;
+		}
+		else
+		{
+			clickedBlock.type = currentBlock;
+		}
+
 	}
 
 
@@ -241,6 +238,6 @@ void closeGame()
 
 	platform::writeEntireFile(RESOURCES_PATH "gameData.data", &gameData, sizeof(GameData));
 
-	map.save(RESOURCES_PATH "mapData.txt");
+	map.save(RESOURCES_PATH "mapData2.txt");
 
 }

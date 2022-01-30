@@ -12,6 +12,7 @@ namespace tiles
 		"------XX"
 		"---X----"
 		"--------"
+		"--XX--XX"
 		;
 
 	gl2d::TextureAtlasPadding textureAtlas{width, height, width * pixelSize, height * pixelSize};

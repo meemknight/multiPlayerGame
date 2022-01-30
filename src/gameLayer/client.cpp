@@ -16,7 +16,7 @@ std::unordered_map<int32_t, phisics::Entity> players;
 void resetClient()
 {
 
-	if (!map.load(RESOURCES_PATH "mapData.txt"))
+	if (!map.load(RESOURCES_PATH "mapData2.txt"))
 	{
 		return ;
 	}
