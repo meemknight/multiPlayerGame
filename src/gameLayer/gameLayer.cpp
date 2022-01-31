@@ -14,6 +14,7 @@ gl2d::Renderer2D renderer;
 
 gl2d::Font font;
 gl2d::Texture sprites;
+gl2d::Texture character;
 
 
 bool initGame()
@@ -21,6 +22,7 @@ bool initGame()
 	renderer.create();
 	font.createFromFile(RESOURCES_PATH "font/ANDYB.TTF");
 	sprites.loadFromFileWithPixelPadding(RESOURCES_PATH "jawbreaker_tiles.png", tiles::pixelSize, true, true);
+	character.loadFromFile(RESOURCES_PATH "character.png", true, true);
 
 	glui::gluiInit();
 
@@ -88,11 +90,11 @@ bool gameLogic(float deltaTime)
 	}
 	else if (state == 1)
 	{
-		clientFunction(deltaTime, renderer, sprites, ip);
+		clientFunction(deltaTime, renderer, sprites, character, ip);
 	}
 	else if (state == 2)
 	{
-		clientFunction(deltaTime, renderer, sprites, ip);
+		clientFunction(deltaTime, renderer, sprites, character, ip);
 
 
 	}

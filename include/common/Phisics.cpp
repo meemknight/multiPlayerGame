@@ -4,8 +4,13 @@
 namespace phisics
 {
 
-	bool aabb(glm::vec4 b1, glm::vec4 b2)
+	bool aabb(glm::vec4 b1, glm::vec4 b2, float delta = 0)
 	{
+		b2.x += delta;
+		b2.y += delta;
+		b2.z -= delta*2;
+		b2.w -= delta*2;
+
 		if (((b1.x - b2.x < b2.z)
 			&& b2.x - b1.x < b1.z
 			)
@@ -113,8 +118,8 @@ namespace phisics
 	void Entity::draw(gl2d::Renderer2D& renderer, float deltaTime, gl2d::Texture characterSprite)
 	{
 
-		//renderer.renderRectangle({ pos, dimensions }, {}, 0, characterSprite);
-		renderer.renderRectangle({ pos* worldMagnification, dimensions * worldMagnification}, Colors_Turqoise);
+		renderer.renderRectangle({pos * worldMagnification, dimensions * worldMagnification}, Colors_Orange, {}, 0, characterSprite);
+		//renderer.renderRectangle({ pos* worldMagnification, dimensions * worldMagnification}, Colors_Turqoise);
 
 	}
 
@@ -132,7 +137,6 @@ namespace phisics
 		{
 			return;
 		}
-
 
 		glm::vec2 newPos = performCollision(mapData, { pos.x, lastPos.y }, { dimensions.x, dimensions.y }, { delta.x, 0 },
 			upTouch, downTouch, leftTouch, rightTouch);
@@ -166,7 +170,7 @@ namespace phisics
 			{
 				if (mapData.get(x, y).isCollidable())
 				{
-					if (aabb({ pos,dimensions }, { x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE }))
+					if (aabb({ pos,dimensions }, { x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE }, 0.0001f))
 					{
 						if (delta.x != 0)
 						{
@@ -183,7 +187,7 @@ namespace phisics
 								goto end;
 							}
 						}
-						else
+						else if(delta.y !=0)
 						{
 							if (delta.y < 0) //moving up
 							{

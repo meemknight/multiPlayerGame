@@ -10,7 +10,7 @@ namespace tiles
 		"-XXXXX-X"
 		"XXXXXXXX"
 		"------XX"
-		"---X----"
+		"--------"
 		"--------"
 		"--XX--XX"
 		;
