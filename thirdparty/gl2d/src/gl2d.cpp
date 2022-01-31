@@ -458,7 +458,7 @@ namespace gl2d
 			const stbtt_aligned_quad  q = internal::fontGetGlyphQuad(*this, c);
 			const float               m = q.y1 - q.y0;
 
-			if (m > max_height && m < 1.e+8f)
+			if (m > max_height && m < 1.e+4f)
 			{
 				max_height = m;
 			}

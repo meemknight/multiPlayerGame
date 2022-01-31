@@ -259,7 +259,14 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 	#pragma region player
 
 		auto &player = players[cid];
-		player.move({posx, posy});
+		bool playerChaged = 0;
+
+		if (posx || posy)
+		{
+			playerChaged = true;
+			player.move({posx, posy});
+		}
+
 
 
 		for (auto &i : players)
@@ -281,10 +288,13 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 
 	#pragma endregion
 
-		Packet p;
-		p.cid = cid;
-		p.header = headerUpdateConnection;
-		sendPacket(server, p, (const char *)&player, sizeof(phisics::Entity), true);
+		if (playerChaged)
+		{
+			Packet p;
+			p.cid = cid;
+			p.header = headerUpdateConnection;
+			sendPacket(server, p, (const char *)&player, sizeof(phisics::Entity), true);
+		}
 
 	}
 

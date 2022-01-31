@@ -10,12 +10,14 @@ struct Client
 {
 	ENetPeer *peer = {};
 	phisics::Entity entityData = {};
+	bool changed = 1;
 	//char clientName[56] = {};
 };
 
 
 std::unordered_map<int32_t, Client> connections;
 int pids = 1;
+bool changedData = 0;
 
 glm::vec3 getRandomColor()
 {
@@ -37,6 +39,7 @@ glm::vec3 getRandomColor()
 
 void addConnection(ENetHost *server, ENetEvent &event)
 {
+	changedData = true;
 	phisics::Entity entity = {};
 	glm::vec3 color = getRandomColor();
 	entity.color = color;
@@ -109,6 +112,7 @@ void removeConnection(ENetHost *server, ENetEvent &event)
 
 void recieveData(ENetHost *server, ENetEvent &event)
 {
+	changedData = true;
 
 	Packet p;
 	size_t size = 0;
@@ -145,17 +149,18 @@ void recieveData(ENetHost *server, ENetEvent &event)
 	else if (p.header == headerUpdateConnection)
 	{
 		connections[p.cid].entityData = *(phisics::Entity*)(data);
-		Packet sPacket;
-		sPacket.header = headerUpdateConnection;
-		sPacket.cid = p.cid;
+		connections[p.cid].changed = true;
 
-		for (auto it = connections.begin(); it != connections.end(); it++)
-		{
-			if (it->second.peer != event.peer)
-			{
-				sendPacket(it->second.peer, sPacket, (const char*)(data), sizeof(phisics::Entity), false);
-			}
-		}
+		//Packet sPacket;
+		//sPacket.header = headerUpdateConnection;
+		//sPacket.cid = p.cid;
+		//for (auto it = connections.begin(); it != connections.end(); it++)
+		//{
+		//	if (it->second.peer != event.peer)
+		//	{
+		//		sendPacket(it->second.peer, sPacket, (const char*)(data), sizeof(phisics::Entity), false);
+		//	}
+		//}
 	}
 	//else if (p.header == headerClientSendName)
 	//{
@@ -205,10 +210,12 @@ void serverFunction()
 
 	while (serverOpen)
 	{
+		int counter = 0;
+		constexpr int maxCounter = 1;
 
-		while (enet_host_service(server, &event, 200) > 0 && serverOpen)
+		while (enet_host_service(server, &event, 0) > 0 && counter < maxCounter && serverOpen)
 		{
-
+			counter++;
 			switch (event.type)
 			{
 				case ENET_EVENT_TYPE_CONNECT:
@@ -234,6 +241,35 @@ void serverFunction()
 			}
 
 		}
+
+		if (changedData)
+		{
+			for (auto p = connections.begin(); p != connections.end(); p++)
+			{
+				
+				if (!p->second.changed)
+				{
+					continue;
+				}
+				
+				p->second.changed = false; 
+
+				Packet sPacket;
+				sPacket.header = headerUpdateConnection;
+				sPacket.cid = p->first;
+				
+				for (auto it = connections.begin(); it != connections.end(); it++)
+				{
+					if (it->second.peer != p->second.peer)
+					{
+						sendPacket(it->second.peer, sPacket, (const char *)(&p->second.entityData), sizeof(phisics::Entity), false);
+					}
+				}
+			}
+			
+		}
+
+		changedData = false;
 
 	}
 	
