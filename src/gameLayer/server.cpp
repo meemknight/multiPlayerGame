@@ -162,6 +162,20 @@ void recieveData(ENetHost *server, ENetEvent &event)
 		//	}
 		//}
 	}
+	else if (p.header == headerSendBullet)
+	{
+		for (auto it = connections.begin(); it != connections.end(); it++)
+		{
+			if (it->second.peer != event.peer)
+			{
+				Packet sPacket;
+				sPacket.header = headerSendBullet;
+				sPacket.cid = p.cid;
+				sendPacket(it->second.peer, sPacket, data, size, false);
+			}
+		}
+
+	}
 	//else if (p.header == headerClientSendName)
 	//{
 	//	if (data)
@@ -252,7 +266,7 @@ void serverFunction()
 					continue;
 				}
 				
-				p->second.changed = false; 
+				p->second.changed = false;
 
 				Packet sPacket;
 				sPacket.header = headerUpdateConnection;

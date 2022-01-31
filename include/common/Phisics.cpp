@@ -34,7 +34,7 @@ namespace phisics
 		float distance = glm::length(lastPos - pos);
 		if (distance == 0 || distance == INFINITY) { return; }
 
-		const float BLOCK_SIZE = mapData.BLOCK_SIZE;
+		const float BLOCK_SIZE = 1;;
 
 		if (distance < BLOCK_SIZE)
 		{
@@ -126,7 +126,7 @@ namespace phisics
 	void Entity::checkCollisionBrute(glm::vec2& pos, glm::vec2 lastPos, MapData& mapData, bool& upTouch, bool& downTouch, bool& leftTouch, bool& rightTouch)
 	{
 		glm::vec2 delta = pos - lastPos;
-		const float BLOCK_SIZE = mapData.BLOCK_SIZE;
+		const float BLOCK_SIZE = 1;
 
 		if (
 			(pos.y < -dimensions.y)
@@ -152,7 +152,7 @@ namespace phisics
 		int maxX = mapData.w;
 		int maxY = mapData.h;
 
-		const float BLOCK_SIZE = mapData.BLOCK_SIZE;
+		const float BLOCK_SIZE = 1;
 
 		minX = (pos.x - abs(delta.x) -BLOCK_SIZE) / BLOCK_SIZE;
 		maxX = ceil((pos.x + abs(delta.x) + BLOCK_SIZE + size.x) / BLOCK_SIZE);
@@ -297,12 +297,73 @@ namespace phisics
 
 		sfs::writeEntireFile(buff, w * h + 2, file);
 
-		delete buff;
+		delete[] buff;
 	}
 
 	bool BlockInfo::isCollidable()
 	{
 		return tiles::isSolid(type);
+	}
+
+	bool Bullet::checkCollisionMap(MapData &mapData)
+	{
+		//first check outsize walls
+		if(pos.x - size/2.f <= 0
+			|| pos.y - size / 2.f < 0.f
+			|| pos.x + size / 2.f > mapData.w
+			|| pos.y + size / 2.f > mapData.h
+			)
+		{
+			return true;
+		}
+
+		glm::vec4 transform(pos.x - size / 2.f, pos.y - size / 2.f, size, size);
+
+		int minX = 0;
+		int minY = 0;
+		int maxX = mapData.w;
+		int maxY = mapData.h;
+
+		const float BLOCK_SIZE = 1;
+
+		minX = (pos.x - BLOCK_SIZE) / BLOCK_SIZE;
+		maxX = ceil((pos.x + BLOCK_SIZE + size) / BLOCK_SIZE);
+
+		minY = (pos.y - BLOCK_SIZE) / BLOCK_SIZE;
+		maxY = ceil((pos.y + BLOCK_SIZE + size) / BLOCK_SIZE);
+
+		minX = std::max(0, minX);
+		minY = std::max(0, minY);
+		maxX = std::min(mapData.w, maxX);
+		maxY = std::min(mapData.h, maxY);
+
+		for (int y = minY; y < maxY; y++)
+			for (int x = minX; x < maxX; x++)
+			{
+				if (mapData.get(x, y).isCollidable())
+				{
+					if (aabb(transform, {x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE}, 0.0001f))
+					{
+						return true;
+					}
+				}
+
+			}
+
+
+		return false;
+	}
+
+	void Bullet::updateMove(float deltaTime)
+	{
+		pos += direction * deltaTime;
+	}
+
+	void Bullet::draw(gl2d::Renderer2D &renderer, gl2d::Texture bulletSprite)
+	{
+		renderer.renderRectangle({(pos - (glm::vec2(size,size) / 2.f)) * worldMagnification, glm::vec2(size,size) * worldMagnification},
+			glm::vec4(color,1), {}, 0, bulletSprite);
+		//renderer.renderRectangle({ (pos - (glm::vec2(size,size)/2.f)) * worldMagnification, glm::vec2(size,size) * worldMagnification}, Colors_Orange);
 	}
 
 };

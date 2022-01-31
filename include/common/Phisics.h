@@ -24,8 +24,6 @@ namespace phisics
 	struct MapData
 	{
 
-		float BLOCK_SIZE = 1;
-		
 		BlockInfo* data;
 		BlockInfo nullBlock = {};
 	
@@ -76,6 +74,18 @@ namespace phisics
 			bool& upTouch, bool& downTouch, bool& leftTouch, bool& rightTouch);
 		glm::vec2 performCollision(MapData& mapData, glm::vec2 pos, glm::vec2 size, glm::vec2 delta,
 			bool& upTouch, bool& downTouch, bool& leftTouch, bool& rightTouch);
+	};
+
+	struct Bullet
+	{
+		glm::vec2 pos = {};
+		glm::vec2 direction = {};
+		glm::vec3 color = {1,1,1};
+		float size = 0.4;
+
+		bool checkCollisionMap(MapData &mapData);
+		void updateMove(float deltaTime);
+		void draw(gl2d::Renderer2D &renderer, gl2d::Texture bulletSprite);
 	};
 	
 	

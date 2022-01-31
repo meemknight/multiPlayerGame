@@ -20,6 +20,7 @@ enum
 	headerAnounceConnection,
 	headerUpdateConnection,
 	headerAnounceDisconnect,
+	headerSendBullet,
 };
 
 void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reliable = true);

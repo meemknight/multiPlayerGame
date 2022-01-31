@@ -12,6 +12,7 @@ bool joined = false;
 ENetHost *client;
 
 std::unordered_map<int32_t, phisics::Entity> players;
+std::vector<phisics::Bullet> bullets;
 
 void resetClient()
 {
@@ -22,6 +23,7 @@ void resetClient()
 	}
 
 	players.clear();
+	bullets.clear();
 
 	//todo add a struct here
 
@@ -149,6 +151,9 @@ void msgLoop(ENetHost *client)
 				{
 					auto find = players.find(p.cid);
 					players.erase(find);
+				}else if (p.header == headerSendBullet)
+				{
+					bullets.push_back(*(phisics::Bullet *)data);
 				}
 
 				enet_packet_destroy(event.packet);
@@ -215,9 +220,11 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 
 		msgLoop(client);
 
+		auto &player = players[cid];
 
 	#pragma region input
 		float speed = 6 * deltaTime;
+		float bulletSpeed = 10;
 		float posy = 0;
 		float posx = 0;
 
@@ -251,14 +258,39 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 			platform::setFullScreen(!platform::isFullScreen());
 		}
 
+		if (platform::isLMouseReleased())
+		{
+			phisics::Bullet b;
+			b.pos = player.pos + (player.dimensions/2.f);
+			b.color = player.color;
+
+			auto mousePos = platform::getRelMousePosition();
+			auto screenCenter = glm::vec2(renderer.windowW, renderer.windowH) / 2.f;
+
+			auto delta = glm::vec2(mousePos) - screenCenter;
+			
+			float magnitude = glm::length(delta);
+			if (magnitude == 0)
+			{
+				b.direction = {1,0};
+			}
+			else
+			{
+				b.direction = delta / magnitude;
+			}
+
+			Packet p;
+			p.cid = cid;
+			p.header = headerSendBullet;
+			sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true);
+
+			bullets.push_back(b);
+		}
 
 	#pragma endregion
 
-
-
 	#pragma region player
 
-		auto &player = players[cid];
 		bool playerChaged = 0;
 
 		if (posx || posy || player.input.x != posx || player.input.y != posy)
@@ -270,7 +302,11 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 
 		for (auto &i : players)
 		{
-			i.second.move(i.second.input * speed);
+			glm::vec2 dir = i.second.input;
+			if (dir.x != 0 || dir.y != 0)
+			{
+				i.second.move(glm::normalize(dir) *speed);
+			}
 			i.second.resolveConstrains(map);
 			i.second.updateMove();
 		}
@@ -284,9 +320,6 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 			i.second.draw(renderer, deltaTime, character);
 		}
 
-
-	#pragma endregion
-
 		if (playerChaged)
 		{
 			Packet p;
@@ -294,6 +327,25 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 			p.header = headerUpdateConnection;
 			sendPacket(server, p, (const char *)&player, sizeof(phisics::Entity), false);
 		}
+
+	#pragma endregion
+
+
+	#pragma region bullets
+
+		for (int i = 0; i < bullets.size(); i++)
+		{
+			bullets[i].updateMove(deltaTime * bulletSpeed);
+			bullets[i].draw(renderer, character);
+			if (bullets[i].checkCollisionMap(map))
+			{
+				bullets.erase(bullets.begin() + i);
+				i--;
+				continue;
+			}
+		}
+
+	#pragma endregion
 
 	}
 
