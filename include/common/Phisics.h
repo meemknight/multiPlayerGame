@@ -47,7 +47,8 @@ namespace phisics
 	{
 		glm::vec2 pos = {};
 		glm::vec2 lastPos = {};
-	
+		glm::vec2 input = {};
+
 		glm::vec2 dimensions = {0.9,0.9};
 		glm::vec3 color = {1,1,1};
 

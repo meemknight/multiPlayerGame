@@ -225,25 +225,25 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Up].held
 			)
 		{
-			posy -= speed;
+			posy = -1;
 		}
 		if (platform::isKeyHeld(platform::Button::Down)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Down].held
 			)
 		{
-			posy += speed;
+			posy = 1;
 		}
 		if (platform::isKeyHeld(platform::Button::Left)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Left].held
 			)
 		{
-			posx -= speed;
+			posx = -1;
 		}
 		if (platform::isKeyHeld(platform::Button::Right)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Right].held
 			)
 		{
-			posx += speed;
+			posx = 1;
 		}
 
 		if (platform::isKeyPressedOn(platform::Button::Enter))
@@ -261,19 +261,18 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 		auto &player = players[cid];
 		bool playerChaged = 0;
 
-		if (posx || posy)
+		if (posx || posy || player.input.x != posx || player.input.y != posy)
 		{
 			playerChaged = true;
-			player.move({posx, posy});
 		}
 
-
+		player.input = {posx, posy};
 
 		for (auto &i : players)
 		{
+			i.second.move(i.second.input * speed);
 			i.second.resolveConstrains(map);
 			i.second.updateMove();
-
 		}
 
 		renderer.currentCamera.follow(player.pos * worldMagnification, deltaTime * 100, 2, renderer.windowW, renderer.windowH);
@@ -293,7 +292,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 			Packet p;
 			p.cid = cid;
 			p.header = headerUpdateConnection;
-			sendPacket(server, p, (const char *)&player, sizeof(phisics::Entity), true);
+			sendPacket(server, p, (const char *)&player, sizeof(phisics::Entity), false);
 		}
 
 	}
