@@ -16,7 +16,7 @@ enum
 {
 	headerNone = 0,
 	headerData,
-	headerReceiveCID,
+	headerReceiveCIDAndData,
 	headerAnounceConnection,
 	headerUpdateConnection,
 	headerAnounceDisconnect,

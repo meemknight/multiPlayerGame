@@ -36,7 +36,7 @@ void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reli
 
 	if (reliable)
 	{
-		flag = ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT;
+		flag = ENET_PACKET_FLAG_RELIABLE;
 	}
 	else
 	{

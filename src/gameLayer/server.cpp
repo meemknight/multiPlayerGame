@@ -3,6 +3,8 @@
 #include "packet.h"
 #include "phisics.h"
 #include <atomic>
+#include <cstdlib>
+#include <ctime>
 
 struct Client
 {
@@ -15,18 +17,39 @@ struct Client
 std::unordered_map<int32_t, Client> connections;
 int pids = 1;
 
+glm::vec3 getRandomColor()
+{
+	glm::vec3 colors[] = 
+	{
+		Colors_Blue
+		,Colors_Yellow
+		,Colors_Magenta
+		,Colors_Turqoise
+		,Colors_Orange
+		,Colors_Purple
+		,Colors_Gray
+	};
+
+	int index = rand() % (sizeof(colors) / sizeof(colors[0]));
+
+	return colors[index];
+}
 
 void addConnection(ENetHost *server, ENetEvent &event)
 {
-	connections.insert({pids, Client{event.peer}});
+	phisics::Entity entity = {};
+	glm::vec3 color = getRandomColor();
+	entity.color = color;
+
+	connections.insert({pids, Client{event.peer, entity}});
 
 	Packet p;
-	p.header = headerReceiveCID;
+	p.header = headerReceiveCIDAndData;
 	p.cid = pids;
 
 	pids++;
 	//send own cid
-	sendPacket(event.peer, p, nullptr, 0);
+	sendPacket(event.peer, p, (const char*)&color, sizeof(color));
 
 	//send other players
 	for (auto it = connections.begin(); it != connections.end(); it++)
@@ -46,7 +69,6 @@ void addConnection(ENetHost *server, ENetEvent &event)
 	sPacket.header = headerAnounceConnection;
 	sPacket.cid = p.cid;
 
-	phisics::Entity entity = {};
 
 	for (auto it = connections.begin(); it != connections.end(); it++)
 	{
@@ -165,6 +187,7 @@ void closeServer()
 void serverFunction()
 {
 	serverOpen = true;
+	std::srand(std::time(0));
 
 	ENetAddress adress;
 	adress.host = ENET_HOST_ANY;

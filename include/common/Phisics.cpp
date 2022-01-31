@@ -118,7 +118,7 @@ namespace phisics
 	void Entity::draw(gl2d::Renderer2D& renderer, float deltaTime, gl2d::Texture characterSprite)
 	{
 
-		renderer.renderRectangle({pos * worldMagnification, dimensions * worldMagnification}, Colors_Orange, {}, 0, characterSprite);
+		renderer.renderRectangle({pos * worldMagnification, dimensions * worldMagnification}, glm::vec4(color,1), {}, 0, characterSprite);
 		//renderer.renderRectangle({ pos* worldMagnification, dimensions * worldMagnification}, Colors_Turqoise);
 
 	}

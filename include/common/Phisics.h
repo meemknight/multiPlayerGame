@@ -49,7 +49,8 @@ namespace phisics
 		glm::vec2 lastPos = {};
 	
 		glm::vec2 dimensions = {0.9,0.9};
-	
+		glm::vec3 color = {1,1,1};
+
 		void resolveConstrains(MapData& mapData);
 	
 	
@@ -58,7 +59,7 @@ namespace phisics
 	
 		// 0 1  -> used for animations
 		bool movingRight = 0;
-	
+		
 	
 		void move(glm::vec2 dir);
 	

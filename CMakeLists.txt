@@ -1,6 +1,10 @@
 #https://github.com/meemknight/cmakeSetup
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.16)
+
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug$<$<CONFIG:Debug>:Debug>")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
+
 project(multyPlayer)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -20,7 +24,7 @@ add_subdirectory(thirdparty/enet-1.3.17)
 add_subdirectory(thirdparty/safeSave)
 
 
-# Define MY_SOURCES to be a list of all the source files for my game 
+# Define MY_SOURCES to be a list of all the source files for my game B
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 file(GLOB_RECURSE MY_SOURCES_COMMON CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/common/*.cpp")
 
@@ -37,8 +41,39 @@ if(MSVC) # If using the VS compiler...
 
 	target_compile_definitions(multyPlayer PUBLIC _CRT_SECURE_NO_WARNINGS)
 	set_target_properties(multyPlayer PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
-	set_property(TARGET multyPlayer PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebug<$<CONFIG:Debug>:Debug>")
-	set_property(TARGET multyPlayer PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
+	#set_property(TARGET multyPlayer PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreadedDebug<$<CONFIG:Debug>:Debug>")
+	#set_property(TARGET multyPlayer PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
+
+
+	#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /D _DEBUG /W3
+	#/MD /Od /Zi /EHsc")
+	#   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /W3 /GL /Od
+	#/Oi /Gy /Zi /EHsc")
+
+	#foreach(flag_var
+	#	CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+	#	CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+	#STRING (REGEX REPLACE "[/|-]RTC(su|[1suc])" "" ${flag_var} "${${flag_var}}")
+	#endforeach(flag_var) #remiove basic runtime error checks
+	#foreach(flag_var
+	#		CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+	#		CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+	#	STRING (REGEX REPLACE "/GR" "" ${flag_var} "${${flag_var}}")
+	#endforeach(flag_var)#remove rtti
+	#
+	#foreach(flag_var
+	#		CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE
+	#		CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+	#	STRING (REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+	#endforeach(flag_var)#staticalli link
+	#foreach(flag_var
+	#		CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG
+	#		CMAKE_CXX_FLAGS_MINSIZEREL)
+	#	STRING (REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
+	#endforeach(flag_var)#staticalli link
+
+
+
 
 endif()
 

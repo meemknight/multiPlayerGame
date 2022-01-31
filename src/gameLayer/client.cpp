@@ -80,9 +80,9 @@ bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::st
 	{
 		Packet p = {};
 		size_t size;
-		parsePacket(event, p, size);
+		auto data = parsePacket(event, p, size);
 
-		if (p.header != headerReceiveCID)
+		if (p.header != headerReceiveCIDAndData)
 		{
 			enet_peer_reset(server);
 			return false;
@@ -90,8 +90,14 @@ bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::st
 
 		cid = p.cid;
 
+		glm::vec3 color = *(glm::vec3 *)data;
+		auto e = phisics::Entity();
+		e.color = color;
+		players[cid] = e;
+
 		//std::cout << "received cid: " << cid << "\n";
 		enet_packet_destroy(event.packet);
+		return true;
 	}
 	else
 	{
@@ -100,8 +106,6 @@ bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::st
 	}
 
 	//std::cout << "fully connected\n";
-
-	players[cid] = phisics::Entity();
 
 	//name
 	//{
