@@ -53,7 +53,7 @@ void spawnItem()
 	auto pos = itemSpawnPosition[i];
 	itemSpawnPosition.erase(itemSpawnPosition.begin() + i);
 
-	auto item = phisics::Item(pos, itemsIds++);
+	auto item = phisics::Item(pos, itemsIds++, rand()%phisics::itemsCount + 1);
 
 	items.push_back(item);
 
@@ -64,14 +64,17 @@ void spawnItem()
 	broadCast(p, &item, sizeof(item), nullptr, true, 1);
 }
 
-bool pickupItem(uint32_t itemId)
+bool pickupItem(uint32_t itemId, phisics::Item &item)
 {
 	auto findPos = std::find_if(items.begin(), items.end(), [itemId](phisics::Item &i) { return i.itemId == itemId; });
+	item = {};
 
 	if (findPos == items.end())
 	{
 		return false;
 	}
+
+	item = *findPos;
 
 	auto pos = findPos->pos;
 	itemSpawnPosition.push_back(pos);
@@ -226,10 +229,12 @@ void recieveData(ENetHost *server, ENetEvent &event)
 		Packet sPacket;
 		sPacket.header = headerPickupItem;
 		sPacket.cid = p.cid;
+		phisics::Item item = {};
 
-		if (pickupItem(*(uint32_t *)data))
+		if (pickupItem(*(uint32_t *)data, item))
 		{
-			broadCast(sPacket, data, sizeof(uint32_t), nullptr, true, 1);
+
+			broadCast(sPacket, &item, sizeof(item), nullptr, true, 1);
 		}
 
 	}
@@ -255,6 +260,8 @@ void closeServer()
 
 void serverFunction()
 {
+
+	std::srand(std::time(0));
 	serverOpen = true;
 
 	ENetAddress adress;

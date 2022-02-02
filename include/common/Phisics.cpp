@@ -146,8 +146,8 @@ namespace phisics
 
 		if (hitTime)
 		{
-			displacement.x = std::sin(hitTime * pi * 45) * (dimensions.x * 0.15);
-			displacement.y = std::sin(pi + hitTime * pi * 20) * (dimensions.x * 0.03);
+			displacement.x = std::sin(hitTime * pi * 65) * (dimensions.x * 0.15);
+			displacement.y = std::sin(pi + hitTime * pi * 25) * (dimensions.x * 0.03);
 		}
 
 		renderer.renderRectangle({ (pos+ displacement) * worldMagnification, dimensions * worldMagnification}, glm::vec4(color,1), {}, 0, characterSprite);
@@ -413,7 +413,7 @@ namespace phisics
 		return aabb({pos, 1.f, 1.f}, {e.pos, e.dimensions}, 0.f);
 	}
 
-	void Item::draw(gl2d::Renderer2D &renderer, gl2d::Texture itemTextue)
+	void Item::draw(gl2d::Renderer2D &renderer, gl2d::Texture medkitTexture, gl2d::Texture bateryTexture)
 	{
 		auto duration = std::chrono::steady_clock::now().time_since_epoch();
 		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
@@ -423,10 +423,16 @@ namespace phisics
 
 		auto shadow = p + glm::vec2(0.1, 0.1);
 
+		auto t = medkitTexture;
+		if (itemType == itemTypeBatery)
+		{
+			t = bateryTexture;
+		}
+
 		renderer.renderRectangle({shadow * worldMagnification, glm::vec2(1,1) * worldMagnification},
-			glm::vec4(0, 0, 0, 1), {}, 0, itemTextue);
+			glm::vec4(0, 0, 0, 1), {}, 0, t);
 		renderer.renderRectangle({p * worldMagnification, glm::vec2(1,1) * worldMagnification},
-			glm::vec4(1,1,1, 1), {}, 0, itemTextue);
+			glm::vec4(1,1,1, 1), {}, 0, t);
 	}
 
 };

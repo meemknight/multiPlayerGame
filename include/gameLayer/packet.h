@@ -22,7 +22,7 @@ enum
 	headerSendBullet,
 	headerRegisterHit,			//contains pid of hit player, clients will recieve cid directly, no data associated
 	headerSpawnItem,			//contains itemData
-	headerPickupItem,			//contains itemId
+	headerPickupItem,			//contains itemId, when recieved by client contains full item data
 };
 
 constexpr int SERVER_CHANNELS = 2;

@@ -5,7 +5,7 @@
 							//when internal build if false and an asertion is hit, the error is reported and the program 
 							//closes
 
-#define ALLOC_CONSOLE 1
+#define ALLOC_CONSOLE 0
 
 
 

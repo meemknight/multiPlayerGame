@@ -54,7 +54,7 @@ namespace phisics
 		int life = maxLife;
 
 		static constexpr int maxLife = 5;
-		static constexpr float invincibilityTime = 0.15;
+		static constexpr float invincibilityTime = 0.10;
 
 		void resolveConstrains(MapData& mapData);
 	
@@ -98,18 +98,27 @@ namespace phisics
 		glm::vec4 getTransform();
 	};
 
+
+	enum
+	{
+		itemTypeHealth = 1,
+		itemTypeBatery,
+		itemsCount = 2,
+	};
+
 	struct Item
 	{
 		Item() {};
-		Item(glm::vec2 pos, uint32_t itemId) 
-			:pos(pos), itemId(itemId)
+		Item(glm::vec2 pos, uint32_t itemId, int itemType) 
+			:pos(pos), itemId(itemId), itemType(itemType)
 		{};
 		
 		glm::vec2 pos = {};
 		uint32_t itemId = 0;
+		int itemType = 0;
 
 		bool checkCollisionPlayer(Entity &e);
-		void draw(gl2d::Renderer2D &renderer, gl2d::Texture itemTextue);
+		void draw(gl2d::Renderer2D &renderer, gl2d::Texture medkitTexture, gl2d::Texture bateryTexture);
 
 	};
 	

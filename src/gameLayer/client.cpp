@@ -12,11 +12,13 @@ int32_t cid = {};
 bool joined = false;
 ENetHost *client;
 
+
 std::unordered_map<int32_t, phisics::Entity> players;
 
 static std::vector<phisics::Bullet> bullets;
 static std::vector<phisics::Bullet> ownBullets;
 static std::vector<phisics::Item> items;
+static bool hasBatery = 0;
 
 glm::ivec2 spawnPositions[] =
 {
@@ -43,6 +45,7 @@ void resetClient()
 	bullets.clear();
 	ownBullets.clear();
 	items.clear();
+	hasBatery = false;
 
 	//todo add a struct here
 
@@ -212,8 +215,8 @@ void msgLoop(ENetHost *client)
 				}
 				else if (p.header == headerPickupItem)
 				{
-					uint32_t itemId = *(uint32_t *)data;
-					auto f = std::find_if(items.begin(), items.end(), [itemId](phisics::Item &i) { return i.itemId == itemId; });
+					auto item = *(phisics::Item*)data;
+					auto f = std::find_if(items.begin(), items.end(), [item](phisics::Item &i) { return i.itemId == item.itemId; });
 
 					if (f != items.end())
 					{
@@ -223,7 +226,16 @@ void msgLoop(ENetHost *client)
 					if (p.cid == cid)
 					{
 						auto find = players.find(p.cid);
-						find->second.life = phisics::Entity::maxLife;
+
+						if (item.itemType == phisics::itemTypeHealth)
+						{
+							find->second.life = phisics::Entity::maxLife;
+						}
+						else if (item.itemType == phisics::itemTypeBatery)
+						{
+							hasBatery = true;
+						}
+
 					}
 
 				}
@@ -330,8 +342,20 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			platform::setFullScreen(!platform::isFullScreen());
 		}
 
-		if (platform::isLMouseReleased())
+		static float culldown = 0;
+		constexpr float culldownTime = 0.1;
+		static int bateryShooting = 0;
+
+		if (culldown > 0)
 		{
+			culldown -= deltaTime;
+		}
+
+		if (platform::isLMouseReleased() && culldown <= 0.f)
+		{
+
+			culldown = culldownTime;
+
 			phisics::Bullet b;
 			b.pos = player.pos + (player.dimensions/2.f);
 			b.color = player.color;
@@ -358,6 +382,46 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true, 1);
 
 			ownBullets.push_back(b);
+
+			if (hasBatery)
+			{
+				bateryShooting = 25;
+			}
+			hasBatery = false;
+		}
+
+		if (bateryShooting > 0)
+		{
+
+			static float batteryShootingDellay = 0;
+			constexpr float batteryShootingDellayCulldownTime = 0.06;
+			batteryShootingDellay -= deltaTime;
+
+			if (batteryShootingDellay < 0.f)
+			{
+				batteryShootingDellay += batteryShootingDellayCulldownTime;
+				
+				phisics::Bullet b;
+				b.pos = player.pos + (player.dimensions / 2.f);
+				b.color = player.color;
+				b.cid = cid;
+				b.direction = {1,0};
+				
+				float angle = (bateryShooting / 10.f) * 2.f * 3.14159265;
+
+				b.direction = glm::mat2(std::cos(angle), -std::sin(angle), std::sin(angle), std::cos(angle)) * b.direction;
+				b.direction = glm::normalize(b.direction);
+
+				Packet p;
+				p.cid = cid;
+				p.header = headerSendBullet;
+				sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true, 1);
+
+				ownBullets.push_back(b);
+
+				bateryShooting--;
+			}
+
 		}
 
 	#pragma endregion
@@ -408,7 +472,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				i.second.updateMove(deltaTime);
 			}
 
-			renderer.currentCamera.follow(player.pos * worldMagnification, deltaTime * 100, 2, renderer.windowW, renderer.windowH);
+			renderer.currentCamera.follow(player.pos * worldMagnification, deltaTime * 5, 2, renderer.windowW, renderer.windowH);
 
 			map.render(renderer, textures.sprites);
 
@@ -438,7 +502,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 
 		for (int i = 0; i < items.size(); i++)
 		{
-			items[i].draw(renderer, textures.medKit);
+			items[i].draw(renderer, textures.medKit, textures.battery);
 
 		}
 
@@ -541,7 +605,15 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				renderer.renderRectangle(crossPos, {1.f,1.f,1.f,1.f}, {}, 0.f, textures.cross);
 				xLeft -= xAdvance;
 			}
+			xLeft = 0.95;
 
+			if (hasBatery)
+			{
+				auto pos = Ui::Box().xLeftPerc(xLeft - 0.05).yTopPerc(0.035 + xSize).xDimensionPercentage(xSize).yAspectRatio(1.f);
+				auto posDown = Ui::Box().xLeftPerc(xLeft + 0.003 - 0.05).yTopPerc(0.040 + xSize).xDimensionPercentage(xSize).yAspectRatio(1.f);
+				renderer.renderRectangle(posDown, {0.f,0.f,0.f,1.f}, {}, 0.f, textures.battery);
+				renderer.renderRectangle(pos, {1.f,1.f,1.f,1.f}, {}, 0.f, textures.battery);
+			}
 
 			renderer.currentCamera = c;
 
