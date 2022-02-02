@@ -18,6 +18,19 @@ std::unordered_map<int32_t, phisics::Entity> players;
 std::vector<phisics::Bullet> bullets;
 std::vector<phisics::Bullet> ownBullets;
 
+glm::ivec2 spawnPositions[] =
+{
+	{5,5},
+	{2,46},
+	{44,44},
+	{45,4}
+};
+
+glm::ivec2 getSpawnPosition()
+{
+	return spawnPositions[rand() % (sizeof(spawnPositions) / sizeof(spawnPositions[0]))];
+}
+
 void resetClient()
 {
 
@@ -41,6 +54,13 @@ void resetClient()
 	cid = {};
 }
 
+void sendPlayerData(phisics::Entity &e, bool reliable)
+{
+	Packet p;
+	p.cid = cid;
+	p.header = headerUpdateConnection;
+	sendPacket(server, p, (const char *)&e, sizeof(phisics::Entity), reliable);
+}
 
 bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::string ip)
 {
@@ -99,8 +119,12 @@ bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::st
 
 		glm::vec3 color = *(glm::vec3 *)data;
 		auto e = phisics::Entity();
+		e.pos = getSpawnPosition();
+		e.lastPos = e.pos;
 		e.color = color;
 		players[cid] = e;
+
+		sendPlayerData(e, true);
 
 		//std::cout << "received cid: " << cid << "\n";
 		enet_packet_destroy(event.packet);
@@ -172,9 +196,12 @@ void msgLoop(ENetHost *client)
 						if (find->second.life <= 0)
 						{
 							auto &p = find->second;
-							p.pos = {};
+							p.pos = getSpawnPosition();
+							p.lastPos = p.pos;
 							p.lastPos = {};
 							p.life = p.maxLife;
+
+							sendPlayerData(p, true);
 
 						}
 
@@ -358,10 +385,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 
 			if (playerChaged)
 			{
-				Packet p;
-				p.cid = cid;
-				p.header = headerUpdateConnection;
-				sendPacket(server, p, (const char *)&player, sizeof(phisics::Entity), false);
+				sendPlayerData(player, false);
 			}
 		}
 	#pragma endregion

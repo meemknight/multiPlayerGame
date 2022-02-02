@@ -31,6 +31,8 @@ bool initGame()
 		return false;
 	}
 
+	std::srand(std::time(0));
+
 	return true;
 }
 

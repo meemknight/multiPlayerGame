@@ -40,7 +40,7 @@ void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reli
 	}
 	else
 	{
-		flag = ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT | ENET_PACKET_FLAG_UNSEQUENCED;
+		flag = ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT; // | ENET_PACKET_FLAG_UNSEQUENCED;
 	}
 
 	ENetPacket *packet = enet_packet_create(dataPool, size + sizeof(Packet), flag);

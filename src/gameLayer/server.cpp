@@ -218,7 +218,6 @@ void closeServer()
 void serverFunction()
 {
 	serverOpen = true;
-	std::srand(std::time(0));
 
 	ENetAddress adress;
 	adress.host = ENET_HOST_ANY;

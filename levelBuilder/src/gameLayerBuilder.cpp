@@ -111,6 +111,7 @@ bool gameLogic(float deltaTime)
 
 		ImGui::Checkbox("Show Collidable Blocks", &collidable);
 		ImGui::Checkbox("Show Non-Collidable Blocks", &nonCollidable);
+		ImGui::Text("MousePos: %d, %d", mousePos.x, mousePos.y);
 
 		unsigned short mCount = 0;
 		ImGui::BeginChild("Block Selector");
