@@ -3,6 +3,7 @@
 #include <Phisics.h>
 #include <packet.h>
 #include <unordered_map>
+#include "Ui.h"
 
 phisics::MapData map;
 
@@ -13,10 +14,9 @@ ENetHost *client;
 
 std::unordered_map<int32_t, phisics::Entity> players;
 
-
-
-std::vector<phisics::Bullet> bullets;
-std::vector<phisics::Bullet> ownBullets;
+static std::vector<phisics::Bullet> bullets;
+static std::vector<phisics::Bullet> ownBullets;
+static std::vector<phisics::Item> items;
 
 glm::ivec2 spawnPositions[] =
 {
@@ -42,6 +42,7 @@ void resetClient()
 	players.clear();
 	bullets.clear();
 	ownBullets.clear();
+	items.clear();
 
 	//todo add a struct here
 
@@ -59,7 +60,7 @@ void sendPlayerData(phisics::Entity &e, bool reliable)
 	Packet p;
 	p.cid = cid;
 	p.header = headerUpdateConnection;
-	sendPacket(server, p, (const char *)&e, sizeof(phisics::Entity), reliable);
+	sendPacket(server, p, (const char *)&e, sizeof(phisics::Entity), reliable, 0);
 }
 
 bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::string ip)
@@ -80,7 +81,7 @@ bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::st
 	adress.port = 7777;
 
 	//client, adress, channels, data to send rightAway
-	server = enet_host_connect(client, &adress, 1, 0);
+	server = enet_host_connect(client, &adress, SERVER_CHANNELS, 0);
 
 	if (server == nullptr)
 	{
@@ -198,14 +199,33 @@ void msgLoop(ENetHost *client)
 							auto &p = find->second;
 							p.pos = getSpawnPosition();
 							p.lastPos = p.pos;
-							p.lastPos = {};
 							p.life = p.maxLife;
 
 							sendPlayerData(p, true);
-
 						}
 
 					}
+				}
+				else if (p.header == headerSpawnItem)
+				{
+					items.push_back(*(phisics::Item *)data);
+				}
+				else if (p.header == headerPickupItem)
+				{
+					uint32_t itemId = *(uint32_t *)data;
+					auto f = std::find_if(items.begin(), items.end(), [itemId](phisics::Item &i) { return i.itemId == itemId; });
+
+					if (f != items.end())
+					{
+						items.erase(f);
+					}
+
+					if (p.cid == cid)
+					{
+						auto find = players.find(p.cid);
+						find->second.life = phisics::Entity::maxLife;
+					}
+
 				}
 
 				enet_packet_destroy(event.packet);
@@ -252,7 +272,7 @@ void closeFunction()
 }
 
 
-void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture sprites, gl2d::Texture character, std::string ip)
+void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textures, std::string ip)
 {
 
 	if (!joined)
@@ -335,13 +355,37 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 			Packet p;
 			p.cid = cid;
 			p.header = headerSendBullet;
-			sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true);
+			sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true, 1);
 
 			ownBullets.push_back(b);
 		}
 
 	#pragma endregion
 
+	#pragma region items
+
+		for (int i = 0; i < items.size(); i++)
+		{
+			//pickup item
+			if (items[i].checkCollisionPlayer(player))
+			{
+				Packet p;
+				p.cid = cid;
+				p.header = headerPickupItem;
+				uint32_t itemId = items[i].itemId;
+				sendPacket(server, p, (const char *)&itemId, sizeof(itemId), true, 1);
+				//sendPacket(server, p, (const char*)&itemId, sizeof(itemId), true, 1);
+
+				items.erase(items.begin() + i);
+				i--;
+				continue;
+			}
+
+		}
+
+	#pragma endregion
+
+	
 	#pragma region player
 		{
 			bool playerChaged = 0;
@@ -366,11 +410,11 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 
 			renderer.currentCamera.follow(player.pos * worldMagnification, deltaTime * 100, 2, renderer.windowW, renderer.windowH);
 
-			map.render(renderer, sprites);
+			map.render(renderer, textures.sprites);
 
 			for (auto &i : players)
 			{
-				i.second.draw(renderer, deltaTime, character);
+				i.second.draw(renderer, deltaTime, textures.character);
 			}
 
 			static float timer = 0;
@@ -390,13 +434,24 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 		}
 	#pragma endregion
 
+	#pragma region items
+
+		for (int i = 0; i < items.size(); i++)
+		{
+			items[i].draw(renderer, textures.medKit);
+
+		}
+
+	#pragma endregion
+
+
 
 	#pragma region bullets
 
 		for (int i = 0; i < bullets.size(); i++)
 		{
 			bullets[i].updateMove(deltaTime * bulletSpeed);
-			bullets[i].draw(renderer, character);
+			bullets[i].draw(renderer, textures.character);
 
 			for (auto &e : players)
 			{
@@ -427,7 +482,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 		for (int i = 0; i < ownBullets.size(); i++)
 		{
 			ownBullets[i].updateMove(deltaTime * bulletSpeed);
-			ownBullets[i].draw(renderer, character);
+			ownBullets[i].draw(renderer, textures.character);
 
 			for (auto &e : players)
 			{
@@ -441,7 +496,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 						Packet p;
 						p.header = headerRegisterHit;
 						p.cid = cid;
-						sendPacket(server, p, (const char*)&e.first, sizeof(int32_t), true);
+						sendPacket(server, p, (const char*)&e.first, sizeof(int32_t), true, 1);
 
 						ownBullets.erase(ownBullets.begin() + i);
 						i--;
@@ -465,6 +520,38 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 		}
 
 	#pragma endregion
+
+
+	#pragma region ui
+		{
+			Ui::Frame f({0,0, renderer.windowW, renderer.windowH});
+
+			auto c = renderer.currentCamera; //todo push pop camera
+			renderer.currentCamera.setDefault();
+
+			float xLeft = 0.95;
+			float xSize = 0.04;
+			float xAdvance = xSize - 0.025;
+
+			for (int i = 0; i < player.life; i++)
+			{
+				auto crossPos = Ui::Box().xLeftPerc(xLeft).yTopPerc(0.02).xDimensionPercentage(xSize).yAspectRatio(1.f);
+				auto crossPosDown = Ui::Box().xLeftPerc(xLeft+0.003).yTopPerc(0.025).xDimensionPercentage(xSize).yAspectRatio(1.f);
+				renderer.renderRectangle(crossPosDown, {0.f,0.f,0.f,1.f}, {}, 0.f, textures.cross);
+				renderer.renderRectangle(crossPos, {1.f,1.f,1.f,1.f}, {}, 0.f, textures.cross);
+				xLeft -= xAdvance;
+			}
+
+
+			renderer.currentCamera = c;
+
+		
+
+		}
+	#pragma endregion
+
+
+
 
 	}
 

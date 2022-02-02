@@ -13,16 +13,17 @@
 gl2d::Renderer2D renderer;
 
 gl2d::Font font;
-gl2d::Texture sprites;
-gl2d::Texture character;
-
+Textures textures;
 
 bool initGame()
 {
 	renderer.create();
 	font.createFromFile(RESOURCES_PATH "font/ANDYB.TTF");
-	sprites.loadFromFileWithPixelPadding(RESOURCES_PATH "jawbreaker_tiles.png", tiles::pixelSize, true, true);
-	character.loadFromFile(RESOURCES_PATH "character.png", true, true);
+	textures.sprites.loadFromFileWithPixelPadding(RESOURCES_PATH "jawbreaker_tiles.png", tiles::pixelSize, true, true);
+	textures.character.loadFromFile(RESOURCES_PATH "character.png", true, true);
+	textures.medKit.loadFromFile(RESOURCES_PATH "medkit.png", true, true);
+	textures.battery.loadFromFile(RESOURCES_PATH "battery.png", true, true);
+	textures.cross.loadFromFile(RESOURCES_PATH "cross.png", true, true);
 
 	glui::gluiInit();
 
@@ -35,7 +36,6 @@ bool initGame()
 
 	return true;
 }
-
 
 
 bool gameLogic(float deltaTime)
@@ -91,11 +91,11 @@ bool gameLogic(float deltaTime)
 	}
 	else if (state == 1)
 	{
-		clientFunction(deltaTime, renderer, sprites, character, ip);
+		clientFunction(deltaTime, renderer, textures, ip);
 	}
 	else if (state == 2)
 	{
-		clientFunction(deltaTime, renderer, sprites, character, ip);
+		clientFunction(deltaTime, renderer, textures, ip);
 
 
 	}

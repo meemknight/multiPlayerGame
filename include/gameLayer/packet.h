@@ -15,14 +15,17 @@ struct Packet
 enum
 {
 	headerNone = 0,
-	headerData,
 	headerReceiveCIDAndData,
 	headerAnounceConnection,
 	headerUpdateConnection,
 	headerAnounceDisconnect,
 	headerSendBullet,
 	headerRegisterHit,			//contains pid of hit player, clients will recieve cid directly, no data associated
+	headerSpawnItem,			//contains itemData
+	headerPickupItem,			//contains itemId
 };
 
-void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reliable = true);
+constexpr int SERVER_CHANNELS = 2;
+
+void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reliable, int channel);
 char *parsePacket(ENetEvent &event, Packet &p, size_t &dataSize);

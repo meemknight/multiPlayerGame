@@ -5,6 +5,8 @@
 #include <atomic>
 #include <cstdlib>
 #include <ctime>
+#include <chrono>
+#include <iostream>
 
 struct Client
 {
@@ -15,7 +17,68 @@ struct Client
 };
 
 
+std::vector<glm::ivec2> itemSpawnPosition =
+{
+	{22,12},
+	{44,17},
+	{31,32},
+	{16,45},
+	{39,28},
+	{11,23},
+	{25,5},
+	{27,46},
+	{22,27},
+};
+
+std::vector<phisics::Item> items;
+constexpr int maxItems = 3;
 std::unordered_map<int32_t, Client> connections;
+
+void broadCast(Packet p, void *data, size_t size, ENetPeer *peerToIgnore, bool reliable, int channel)
+{
+	for (auto it = connections.begin(); it != connections.end(); it++)
+	{
+		if (!peerToIgnore || (it->second.peer != peerToIgnore))
+		{
+			sendPacket(it->second.peer, p, (const char *)data, size, true, channel);
+		}
+	}
+}
+
+
+void spawnItem()
+{
+	static int itemsIds = 1;
+	int i = rand() % itemSpawnPosition.size();
+	auto pos = itemSpawnPosition[i];
+	itemSpawnPosition.erase(itemSpawnPosition.begin() + i);
+
+	auto item = phisics::Item(pos, itemsIds++);
+
+	items.push_back(item);
+
+	Packet p;
+	p.cid = 0;
+	p.header = headerSpawnItem;
+
+	broadCast(p, &item, sizeof(item), nullptr, true, 1);
+}
+
+bool pickupItem(uint32_t itemId)
+{
+	auto findPos = std::find_if(items.begin(), items.end(), [itemId](phisics::Item &i) { return i.itemId == itemId; });
+
+	if (findPos == items.end())
+	{
+		return false;
+	}
+
+	auto pos = findPos->pos;
+	itemSpawnPosition.push_back(pos);
+	items.erase(findPos);
+	return true;
+}
+
 int pids = 1;
 bool changedData = 0;
 
@@ -52,7 +115,7 @@ void addConnection(ENetHost *server, ENetEvent &event)
 
 	pids++;
 	//send own cid
-	sendPacket(event.peer, p, (const char*)&color, sizeof(color));
+	sendPacket(event.peer, p, (const char*)&color, sizeof(color), true, 0);
 
 	//send other players
 	for (auto it = connections.begin(); it != connections.end(); it++)
@@ -62,29 +125,30 @@ void addConnection(ENetHost *server, ENetEvent &event)
 			Packet sPacket;
 			sPacket.header = headerUpdateConnection;
 			sPacket.cid = it->first;
-			sendPacket(event.peer, sPacket, (const char *)&it->second.entityData, sizeof(phisics::Entity));
+			sendPacket(event.peer, sPacket, (const char *)&it->second.entityData, sizeof(phisics::Entity), true, 0);
 		}
 	}
 
+	//send other items
+	for (auto &it : items)
+	{
+		Packet p;
+		p.cid = 0;
+		p.header = headerSpawnItem;
+		sendPacket(event.peer, p, (const char *)&it, sizeof(phisics::Item), true, 1);
+	}
 
 	//broadcast data of new connection
 	Packet sPacket;
 	sPacket.header = headerAnounceConnection;
 	sPacket.cid = p.cid;
 
+	broadCast(sPacket, &entity, sizeof(entity), event.peer, true, 0);
 
-	for (auto it = connections.begin(); it != connections.end(); it++)
-	{
-		if (it->second.peer != event.peer)
-		{
-			sendPacket(it->second.peer, sPacket, (const char*)&entity, sizeof(entity));
-		}
-	}
 }
 
 void removeConnection(ENetHost *server, ENetEvent &event)
 {
-
 
 	for (auto it = connections.begin(); it != connections.end(); it++)
 	{
@@ -95,13 +159,8 @@ void removeConnection(ENetHost *server, ENetEvent &event)
 			Packet sPacket;
 			sPacket.header = headerAnounceDisconnect;
 			sPacket.cid = it->first;
-			for (auto it = connections.begin(); it != connections.end(); it++)
-			{
-				if (it->second.peer != event.peer)
-				{
-					sendPacket(it->second.peer, sPacket, nullptr, 0);
-				}
-			}
+
+			broadCast(sPacket, nullptr, 0, event.peer, true, 0);
 
 			enet_peer_disconnect(event.peer, 0);
 			connections.erase(it);
@@ -125,28 +184,7 @@ void recieveData(ENetHost *server, ENetEvent &event)
 		return;
 	}
 
-	if (p.header == headerData)
-	{
-		if (data)
-		{
-			//std::cout << "recieved from cid: " << p.cid << " with name: "
-			//	<< connections[p.cid].clientName << " -> " << data << "\n";
-		}
-
-		//broadcast data
-		//Packet sPacket;
-		//sPacket.header = headerData;
-		//sPacket.cid = p.cid;
-		//for (auto it = connections.begin(); it != connections.end(); it++)
-		//{
-		//	if (it->second.peer != event.peer)
-		//	{
-		//		sendPacket(it->second.peer, sPacket, data, size);
-		//	}
-		//}
-
-	}
-	else if (p.header == headerUpdateConnection)
+	if (p.header == headerUpdateConnection)
 	{
 		connections[p.cid].entityData = *(phisics::Entity*)(data);
 		connections[p.cid].changed = true;
@@ -171,30 +209,30 @@ void recieveData(ENetHost *server, ENetEvent &event)
 				Packet sPacket;
 				sPacket.header = headerSendBullet;
 				sPacket.cid = p.cid;
-				sendPacket(it->second.peer, sPacket, data, size, false);
+				sendPacket(it->second.peer, sPacket, data, size, true, 1);
 			}
 		}
 	}
 	else if (p.header == headerRegisterHit)
 	{
-		for (auto it = connections.begin(); it != connections.end(); it++)
-		{
-			if (it->second.peer != event.peer)
-			{
-				Packet sPacket;
-				sPacket.header = headerRegisterHit;
-				sPacket.cid = *(int32_t*)data;
-				sendPacket(it->second.peer, sPacket, 0, 0, true);
-			}
-		}
+		Packet sPacket;
+		sPacket.header = headerRegisterHit;
+		sPacket.cid = *(int32_t *)data;
+		broadCast(sPacket, nullptr, 0, event.peer, true, 1);
 	}
-	//else if (p.header == headerClientSendName)
-	//{
-	//	if (data)
-	//	{
-	//		memcpy(connections[p.cid].clientName, data, std::min(sizeof(Client::clientName), size));
-	//	}
-	//}
+	else if (p.header == headerPickupItem)
+	{
+		//std::cout << "pickup\n";
+		Packet sPacket;
+		sPacket.header = headerPickupItem;
+		sPacket.cid = p.cid;
+
+		if (pickupItem(*(uint32_t *)data))
+		{
+			broadCast(sPacket, data, sizeof(uint32_t), nullptr, true, 1);
+		}
+
+	}
 
 
 	//std::cout << event.packet->dataLength << "\n";
@@ -225,7 +263,7 @@ void serverFunction()
 	ENetEvent event;
 
 	//first param adress, players limit, channels, bandwith limit
-	ENetHost *server = enet_host_create(&adress, 32, 1, 0, 0);
+	ENetHost *server = enet_host_create(&adress, 32, SERVER_CHANNELS, 0, 0);
 
 	if (!server)
 	{
@@ -282,19 +320,46 @@ void serverFunction()
 				Packet sPacket;
 				sPacket.header = headerUpdateConnection;
 				sPacket.cid = p->first;
-				
-				for (auto it = connections.begin(); it != connections.end(); it++)
-				{
-					if (it->second.peer != p->second.peer)
-					{
-						sendPacket(it->second.peer, sPacket, (const char *)(&p->second.entityData), sizeof(phisics::Entity), false);
-					}
-				}
+				broadCast(sPacket, &p->second.entityData, sizeof(phisics::Entity), p->second.peer, false, 0);
 			}
 			
 		}
 
 		changedData = false;
+		
+		float deltaTime = 0.f;
+		{
+			static auto stop = std::chrono::high_resolution_clock::now();
+			auto start = std::chrono::high_resolution_clock::now();
+
+			deltaTime = (std::chrono::duration_cast<std::chrono::microseconds>(start - stop)).count() / 1000000.0f;
+			stop = std::chrono::high_resolution_clock::now();
+		}
+
+	#pragma region items
+		{
+
+			static float spawnTime = 5.f;
+			
+			if (items.size() < maxItems)
+			{
+				spawnTime -= deltaTime;
+
+				if (spawnTime <= 0.f)
+				{
+					spawnTime = rand() % 5 + 5;
+
+					spawnItem();
+				}
+
+			}
+
+
+
+		}
+	#pragma endregion
+
+
 
 	}
 	

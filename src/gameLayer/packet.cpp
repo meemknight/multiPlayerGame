@@ -16,7 +16,7 @@
 //	}
 //}
 
-void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reliable)
+void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reliable, int channel)
 {
 
 	//resize(size + sizeof(Packet));
@@ -44,8 +44,7 @@ void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reli
 	}
 
 	ENetPacket *packet = enet_packet_create(dataPool, size + sizeof(Packet), flag);
-	enet_peer_send(to, 0, packet);
-	//channel 0
+	enet_peer_send(to, channel, packet);
 
 	delete[] dataPool;
 

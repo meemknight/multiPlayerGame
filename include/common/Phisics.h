@@ -97,6 +97,21 @@ namespace phisics
 		void draw(gl2d::Renderer2D &renderer, gl2d::Texture bulletSprite);
 		glm::vec4 getTransform();
 	};
+
+	struct Item
+	{
+		Item() {};
+		Item(glm::vec2 pos, uint32_t itemId) 
+			:pos(pos), itemId(itemId)
+		{};
+		
+		glm::vec2 pos = {};
+		uint32_t itemId = 0;
+
+		bool checkCollisionPlayer(Entity &e);
+		void draw(gl2d::Renderer2D &renderer, gl2d::Texture itemTextue);
+
+	};
 	
 	
 	//pos and size on on every component

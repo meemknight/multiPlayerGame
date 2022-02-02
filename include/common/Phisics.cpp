@@ -1,5 +1,6 @@
 #include "Phisics.h"
 #include <safeSave.h>
+#include <chrono>
 
 namespace phisics
 {
@@ -405,6 +406,27 @@ namespace phisics
 	glm::vec4 Bullet::getTransform()
 	{
 		return glm::vec4(pos.x - size / 2.f, pos.y - size / 2.f, size, size);
+	}
+
+	bool Item::checkCollisionPlayer(Entity &e)
+	{
+		return aabb({pos, 1.f, 1.f}, {e.pos, e.dimensions}, 0.f);
+	}
+
+	void Item::draw(gl2d::Renderer2D &renderer, gl2d::Texture itemTextue)
+	{
+		auto duration = std::chrono::steady_clock::now().time_since_epoch();
+		auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+
+		auto p = pos;
+		p.y += 0.15f * std::sin(millis / 180.f);
+
+		auto shadow = p + glm::vec2(0.1, 0.1);
+
+		renderer.renderRectangle({shadow * worldMagnification, glm::vec2(1,1) * worldMagnification},
+			glm::vec4(0, 0, 0, 1), {}, 0, itemTextue);
+		renderer.renderRectangle({p * worldMagnification, glm::vec2(1,1) * worldMagnification},
+			glm::vec4(1,1,1, 1), {}, 0, itemTextue);
 	}
 
 };
