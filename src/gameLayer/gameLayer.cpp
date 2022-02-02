@@ -36,7 +36,6 @@ bool initGame()
 
 
 
-
 bool gameLogic(float deltaTime)
 {
 #pragma region init stuff

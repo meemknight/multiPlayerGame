@@ -4,6 +4,8 @@
 namespace phisics
 {
 
+	constexpr float pi = 3.141592653;
+
 	bool aabb(glm::vec4 b1, glm::vec4 b2, float delta = 0)
 	{
 		b2.x += delta;
@@ -86,8 +88,10 @@ namespace phisics
 	end:
 
 		//clamp the box if needed
-		//if (pos.x < 0) { pos.x = 0; }
-		//if (pos.x + dimensions.x > (mapData.w) * BLOCK_SIZE) { pos.x = ((mapData.w) * BLOCK_SIZE) - dimensions.x; }
+		if (pos.x < 0) { pos.x = 0; }
+		if (pos.y < 0) { pos.y = 0; }
+		if (pos.x + dimensions.x > (mapData.w) * BLOCK_SIZE) { pos.x = ((mapData.w) * BLOCK_SIZE) - dimensions.x; }
+		if (pos.y + dimensions.y > (mapData.h) * BLOCK_SIZE) { pos.y = ((mapData.h) * BLOCK_SIZE) - dimensions.y; }
 		void;
 
 	}
@@ -99,7 +103,20 @@ namespace phisics
 
 	}
 
-	void Entity::updateMove()
+	bool Entity::hit()
+	{
+		if (hitTime <= 0.f)
+		{
+			hitTime = invincibilityTime;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	void Entity::updateMove(float deltaTime)
 	{
 
 		if (lastPos.x - pos.x < 0)
@@ -112,13 +129,27 @@ namespace phisics
 		}
 
 		lastPos = pos;
+		
+		hitTime -= deltaTime;
+		if (hitTime <= 0.f)
+		{
+			hitTime = 0.f;
+		}
 
 	}
 
 	void Entity::draw(gl2d::Renderer2D& renderer, float deltaTime, gl2d::Texture characterSprite)
 	{
 
-		renderer.renderRectangle({pos * worldMagnification, dimensions * worldMagnification}, glm::vec4(color,1), {}, 0, characterSprite);
+		glm::vec2 displacement = {};
+
+		if (hitTime)
+		{
+			displacement.x = std::sin(hitTime * pi * 45) * (dimensions.x * 0.15);
+			displacement.y = std::sin(pi + hitTime * pi * 20) * (dimensions.x * 0.03);
+		}
+
+		renderer.renderRectangle({ (pos+ displacement) * worldMagnification, dimensions * worldMagnification}, glm::vec4(color,1), {}, 0, characterSprite);
 		//renderer.renderRectangle({ pos* worldMagnification, dimensions * worldMagnification}, Colors_Turqoise);
 
 	}
@@ -317,7 +348,7 @@ namespace phisics
 			return true;
 		}
 
-		glm::vec4 transform(pos.x - size / 2.f, pos.y - size / 2.f, size, size);
+		glm::vec4 transform = getTransform();
 
 		int minX = 0;
 		int minY = 0;
@@ -354,6 +385,11 @@ namespace phisics
 		return false;
 	}
 
+	bool Bullet::checkCollisionPlayer(Entity &e)
+	{
+		return aabb(getTransform(), glm::vec4(e.pos, e.dimensions), 0.f);
+	}
+
 	void Bullet::updateMove(float deltaTime)
 	{
 		pos += direction * deltaTime;
@@ -364,6 +400,11 @@ namespace phisics
 		renderer.renderRectangle({(pos - (glm::vec2(size,size) / 2.f)) * worldMagnification, glm::vec2(size,size) * worldMagnification},
 			glm::vec4(color,1), {}, 0, bulletSprite);
 		//renderer.renderRectangle({ (pos - (glm::vec2(size,size)/2.f)) * worldMagnification, glm::vec2(size,size) * worldMagnification}, Colors_Orange);
+	}
+
+	glm::vec4 Bullet::getTransform()
+	{
+		return glm::vec4(pos.x - size / 2.f, pos.y - size / 2.f, size, size);
 	}
 
 };

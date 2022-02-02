@@ -21,6 +21,7 @@ enum
 	headerUpdateConnection,
 	headerAnounceDisconnect,
 	headerSendBullet,
+	headerRegisterHit,			//contains pid of hit player, clients will recieve cid directly, no data associated
 };
 
 void sendPacket(ENetPeer *to, Packet p, const char *data, size_t size, bool reliable = true);

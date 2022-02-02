@@ -174,7 +174,19 @@ void recieveData(ENetHost *server, ENetEvent &event)
 				sendPacket(it->second.peer, sPacket, data, size, false);
 			}
 		}
-
+	}
+	else if (p.header == headerRegisterHit)
+	{
+		for (auto it = connections.begin(); it != connections.end(); it++)
+		{
+			if (it->second.peer != event.peer)
+			{
+				Packet sPacket;
+				sPacket.header = headerRegisterHit;
+				sPacket.cid = *(int32_t*)data;
+				sendPacket(it->second.peer, sPacket, 0, 0, true);
+			}
+		}
 	}
 	//else if (p.header == headerClientSendName)
 	//{

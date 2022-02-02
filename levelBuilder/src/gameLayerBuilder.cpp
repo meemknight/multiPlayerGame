@@ -32,7 +32,7 @@ bool initGame()
 		gameData = GameData();
 	}
 
-	if (!map.load(RESOURCES_PATH "mapData2.txt"))
+	if (!map.load(RESOURCES_PATH "mapData2.bin"))
 	{
 		char mapInfo[50 * 50] = {};
 		//for (int i = 0; i < sizeof(mapInfo); i++)
@@ -238,6 +238,6 @@ void closeGame()
 
 	platform::writeEntireFile(RESOURCES_PATH "gameData.data", &gameData, sizeof(GameData));
 
-	map.save(RESOURCES_PATH "mapData2.txt");
+	map.save(RESOURCES_PATH "mapData2.bin");
 
 }

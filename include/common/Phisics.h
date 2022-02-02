@@ -50,6 +50,12 @@ namespace phisics
 		glm::vec2 dimensions = {0.9,0.9};
 		glm::vec3 color = {1,1,1};
 
+		float hitTime = 0.f;
+		int life = maxLife;
+
+		static constexpr int maxLife = 5;
+		static constexpr float invincibilityTime = 0.15;
+
 		void resolveConstrains(MapData& mapData);
 	
 	
@@ -61,10 +67,11 @@ namespace phisics
 		
 	
 		void move(glm::vec2 dir);
-	
+		
+		bool hit();
 	
 		//should be called only once per frame
-		void updateMove();
+		void updateMove(float deltaTime);
 	
 		void draw(gl2d::Renderer2D& renderer, float deltaTime, gl2d::Texture characterSprite);
 	
@@ -81,11 +88,14 @@ namespace phisics
 		glm::vec2 pos = {};
 		glm::vec2 direction = {};
 		glm::vec3 color = {1,1,1};
+		int32_t cid = 0;
 		float size = 0.4;
 
 		bool checkCollisionMap(MapData &mapData);
+		bool checkCollisionPlayer(Entity &e);
 		void updateMove(float deltaTime);
 		void draw(gl2d::Renderer2D &renderer, gl2d::Texture bulletSprite);
+		glm::vec4 getTransform();
 	};
 	
 	

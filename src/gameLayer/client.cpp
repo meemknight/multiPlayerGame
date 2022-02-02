@@ -12,18 +12,23 @@ bool joined = false;
 ENetHost *client;
 
 std::unordered_map<int32_t, phisics::Entity> players;
+
+
+
 std::vector<phisics::Bullet> bullets;
+std::vector<phisics::Bullet> ownBullets;
 
 void resetClient()
 {
 
-	if (!map.load(RESOURCES_PATH "mapData2.txt"))
+	if (!map.load(RESOURCES_PATH "mapData2.bin"))
 	{
 		return ;
 	}
 
 	players.clear();
 	bullets.clear();
+	ownBullets.clear();
 
 	//todo add a struct here
 
@@ -155,6 +160,26 @@ void msgLoop(ENetHost *client)
 				{
 					bullets.push_back(*(phisics::Bullet *)data);
 				}
+				else if (p.header == headerRegisterHit)
+				{
+					auto find = players.find(p.cid);
+					bool h = find->second.hit();
+
+					if (h && find->first == cid)
+					{
+						find->second.life -= 1;
+
+						if (find->second.life <= 0)
+						{
+							auto &p = find->second;
+							p.pos = {};
+							p.lastPos = {};
+							p.life = p.maxLife;
+
+						}
+
+					}
+				}
 
 				enet_packet_destroy(event.packet);
 
@@ -223,8 +248,8 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 		auto &player = players[cid];
 
 	#pragma region input
-		float speed = 6 * deltaTime;
-		float bulletSpeed = 10;
+		float speed = 10 * deltaTime;
+		float bulletSpeed = 16;
 		float posy = 0;
 		float posx = 0;
 
@@ -263,6 +288,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 			phisics::Bullet b;
 			b.pos = player.pos + (player.dimensions/2.f);
 			b.color = player.color;
+			b.cid = cid;
 
 			auto mousePos = platform::getRelMousePosition();
 			auto screenCenter = glm::vec2(renderer.windowW, renderer.windowH) / 2.f;
@@ -284,50 +310,60 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 			p.header = headerSendBullet;
 			sendPacket(server, p, (const char *)&b, sizeof(phisics::Bullet), true);
 
-			bullets.push_back(b);
+			ownBullets.push_back(b);
 		}
 
 	#pragma endregion
 
 	#pragma region player
-
-		bool playerChaged = 0;
-
-		if (posx || posy || player.input.x != posx || player.input.y != posy)
 		{
-			playerChaged = true;
-		}
+			bool playerChaged = 0;
 
-		player.input = {posx, posy};
-
-		for (auto &i : players)
-		{
-			glm::vec2 dir = i.second.input;
-			if (dir.x != 0 || dir.y != 0)
+			if (posx || posy || player.input.x != posx || player.input.y != posy)
 			{
-				i.second.move(glm::normalize(dir) *speed);
+				playerChaged = true;
 			}
-			i.second.resolveConstrains(map);
-			i.second.updateMove();
+
+			player.input = {posx, posy};
+
+			for (auto &i : players)
+			{
+				glm::vec2 dir = i.second.input;
+				if (dir.x != 0 || dir.y != 0)
+				{
+					i.second.move(glm::normalize(dir) * speed);
+				}
+				i.second.resolveConstrains(map);
+				i.second.updateMove(deltaTime);
+			}
+
+			renderer.currentCamera.follow(player.pos * worldMagnification, deltaTime * 100, 2, renderer.windowW, renderer.windowH);
+
+			map.render(renderer, sprites);
+
+			for (auto &i : players)
+			{
+				i.second.draw(renderer, deltaTime, character);
+			}
+
+			static float timer = 0;
+			constexpr float updateTime = 1.f / 10;
+
+			timer -= deltaTime;
+			if (playerChaged || timer <= 0)
+			{
+				timer = updateTime;
+				playerChaged = true;
+			}
+
+			if (playerChaged)
+			{
+				Packet p;
+				p.cid = cid;
+				p.header = headerUpdateConnection;
+				sendPacket(server, p, (const char *)&player, sizeof(phisics::Entity), false);
+			}
 		}
-
-		renderer.currentCamera.follow(player.pos * worldMagnification, deltaTime * 100, 2, renderer.windowW, renderer.windowH);
-
-		map.render(renderer, sprites);
-
-		for (auto &i : players)
-		{
-			i.second.draw(renderer, deltaTime, character);
-		}
-
-		if (playerChaged)
-		{
-			Packet p;
-			p.cid = cid;
-			p.header = headerUpdateConnection;
-			sendPacket(server, p, (const char *)&player, sizeof(phisics::Entity), false);
-		}
-
 	#pragma endregion
 
 
@@ -337,9 +373,68 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, gl2d::Texture s
 		{
 			bullets[i].updateMove(deltaTime * bulletSpeed);
 			bullets[i].draw(renderer, character);
+
+			for (auto &e : players)
+			{
+				if (bullets[i].cid != e.first)
+				{
+					if (bullets[i].checkCollisionPlayer(e.second))
+					{
+						//hit player
+						bullets.erase(bullets.begin() + i);
+						i--;
+						break;
+					}
+				}
+			}
+		}
+
+		for (int i = 0; i < bullets.size(); i++)
+		{
 			if (bullets[i].checkCollisionMap(map))
 			{
 				bullets.erase(bullets.begin() + i);
+				i--;
+				continue;
+			}
+		}
+
+
+		for (int i = 0; i < ownBullets.size(); i++)
+		{
+			ownBullets[i].updateMove(deltaTime * bulletSpeed);
+			ownBullets[i].draw(renderer, character);
+
+			for (auto &e : players)
+			{
+				if (e.first != cid)
+				{
+					if (ownBullets[i].checkCollisionPlayer(e.second))
+					{
+						//hit player, register hit
+						e.second.hit();
+
+						Packet p;
+						p.header = headerRegisterHit;
+						p.cid = cid;
+						sendPacket(server, p, (const char*)&e.first, sizeof(int32_t), true);
+
+						ownBullets.erase(ownBullets.begin() + i);
+						i--;
+						break;
+					}
+				}
+			}
+
+
+			
+		}
+
+		for (int i = 0; i < ownBullets.size(); i++)
+		{
+			if (ownBullets[i].checkCollisionMap(map))
+			{
+				ownBullets.erase(ownBullets.begin() + i);
 				i--;
 				continue;
 			}
