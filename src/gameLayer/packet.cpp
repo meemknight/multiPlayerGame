@@ -1,7 +1,9 @@
 #include "packet.h"
 #include <vector>
+#include <algorithm>
 #undef max
 #undef min
+
 
 //char *dataPool;
 //size_t dataPoolSize;

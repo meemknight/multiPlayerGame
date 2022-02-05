@@ -9,6 +9,7 @@
 #include "glui/glui.h"
 #include "serverClient.h"
 #include <thread>
+#include <ctime>
 
 gl2d::Renderer2D renderer;
 

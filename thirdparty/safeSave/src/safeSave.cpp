@@ -9,9 +9,9 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
-
 #endif
 
+#include <algorithm>
 
 namespace sfs
 {
@@ -358,7 +358,7 @@ namespace sfs
 		}
 		
 		fileMapping.pointer = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED,
-                fileMapping.internal.fd, 0);
+				fileMapping.internal.fd, 0);
 
 		if(fileMapping.pointer == MAP_FAILED)
 		{
