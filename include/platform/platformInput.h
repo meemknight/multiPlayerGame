@@ -81,14 +81,14 @@ namespace platform
 		Left = GLFW_GAMEPAD_BUTTON_DPAD_LEFT,  
 		};
 
-		Button buttons[GLFW_GAMEPAD_BUTTON_LAST + 1];
+		Button buttons[GLFW_GAMEPAD_BUTTON_LAST + 1] = {};
 
-		float LT;
-		float RT;
+		float LT = 0;
+		float RT = 0;
 
 		struct
 		{
-			float x, y;
+			float x=0, y=0;
 		}LStick, RStick;
 
 		void setAllToZero()

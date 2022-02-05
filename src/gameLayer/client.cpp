@@ -311,27 +311,36 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 		float bulletSpeed = 16;
 		float posy = 0;
 		float posx = 0;
+		constexpr float CONTROLLER_MARGIN = 0.5;
 
 		if (platform::isKeyHeld(platform::Button::Up)
+			|| platform::isKeyHeld(platform::Button::W)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Up].held
+			|| platform::getControllerButtons().LStick.y < -CONTROLLER_MARGIN
 			)
 		{
 			posy = -1;
 		}
 		if (platform::isKeyHeld(platform::Button::Down)
+			|| platform::isKeyHeld(platform::Button::S)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Down].held
+			|| platform::getControllerButtons().LStick.y > CONTROLLER_MARGIN
 			)
 		{
 			posy = 1;
 		}
 		if (platform::isKeyHeld(platform::Button::Left)
+			|| platform::isKeyHeld(platform::Button::A)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Left].held
+			|| platform::getControllerButtons().LStick.x < -CONTROLLER_MARGIN
 			)
 		{
 			posx = -1;
 		}
 		if (platform::isKeyHeld(platform::Button::Right)
+			|| platform::isKeyHeld(platform::Button::D)
 			|| platform::getControllerButtons().buttons[platform::ControllerButtons::Right].held
+			|| platform::getControllerButtons().LStick.x > CONTROLLER_MARGIN
 			)
 		{
 			posx = 1;
@@ -343,7 +352,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 		}
 
 		static float culldown = 0;
-		constexpr float culldownTime = 0.1;
+		constexpr float culldownTime = 0.3;
 		static int bateryShooting = 0;
 
 		if (culldown > 0)
@@ -351,7 +360,11 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			culldown -= deltaTime;
 		}
 
-		if (platform::isLMouseReleased() && culldown <= 0.f)
+		if ((platform::isLMouseHeld() 
+			||
+			platform::getControllerButtons().LT > CONTROLLER_MARGIN
+			)
+			&& culldown <= 0.f)
 		{
 
 			culldown = culldownTime;
@@ -361,20 +374,32 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			b.color = player.color;
 			b.cid = cid;
 
-			auto mousePos = platform::getRelMousePosition();
-			auto screenCenter = glm::vec2(renderer.windowW, renderer.windowH) / 2.f;
+			glm::vec2 thumbDir = {platform::getControllerButtons().RStick.x,platform::getControllerButtons().RStick.y};
 
-			auto delta = glm::vec2(mousePos) - screenCenter;
-			
-			float magnitude = glm::length(delta);
-			if (magnitude == 0)
+			if (glm::length(thumbDir) > 0.f)
 			{
-				b.direction = {1,0};
+				thumbDir = glm::normalize(thumbDir);
+				b.direction = thumbDir;
 			}
 			else
 			{
-				b.direction = delta / magnitude;
+				auto mousePos = platform::getRelMousePosition();
+				auto screenCenter = glm::vec2(renderer.windowW, renderer.windowH) / 2.f;
+
+				auto delta = glm::vec2(mousePos) - screenCenter;
+
+				float magnitude = glm::length(delta);
+				if (magnitude == 0)
+				{
+					b.direction = {1,0};
+				}
+				else
+				{
+					b.direction = delta / magnitude;
+				}
 			}
+
+			
 
 			Packet p;
 			p.cid = cid;
@@ -454,7 +479,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 		{
 			bool playerChaged = 0;
 
-			if (posx || posy || player.input.x != posx || player.input.y != posy)
+			if (player.input.x != posx || player.input.y != posy)
 			{
 				playerChaged = true;
 			}
@@ -472,7 +497,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 				i.second.updateMove(deltaTime);
 			}
 
-			renderer.currentCamera.follow(player.pos * worldMagnification, deltaTime * 5, 2, renderer.windowW, renderer.windowH);
+			renderer.currentCamera.follow(player.pos * worldMagnification, deltaTime * 5, 3, renderer.windowW, renderer.windowH);
 
 			map.render(renderer, textures.sprites);
 

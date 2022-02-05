@@ -281,7 +281,7 @@ void serverFunction()
 	while (serverOpen)
 	{
 		int counter = 0;
-		constexpr int maxCounter = 1;
+		constexpr int maxCounter = 5;
 
 		while (enet_host_service(server, &event, 0) > 0 && counter < maxCounter && serverOpen)
 		{
@@ -309,7 +309,6 @@ void serverFunction()
 					break;
 				}
 			}
-
 		}
 
 		if (changedData)
