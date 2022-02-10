@@ -4,6 +4,7 @@
 #include <packet.h>
 #include <unordered_map>
 #include "Ui.h"
+#include <glui/glui.h>
 
 phisics::MapData map;
 
@@ -66,7 +67,7 @@ void sendPlayerData(phisics::Entity &e, bool reliable)
 	sendPacket(server, p, (const char *)&e, sizeof(phisics::Entity), reliable, 0);
 }
 
-bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::string ip)
+bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::string ip, char *playerName)
 {
 	ENetAddress adress;
 	ENetEvent event;
@@ -126,6 +127,7 @@ bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::st
 		e.pos = getSpawnPosition();
 		e.lastPos = e.pos;
 		e.color = color;
+		memcpy(e.name, playerName, playerNameSize);
 		players[cid] = e;
 
 		sendPlayerData(e, true);
@@ -284,7 +286,7 @@ void closeFunction()
 }
 
 
-void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textures, std::string ip)
+void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textures, std::string ip, char *playerName)
 {
 
 	if (!joined)
@@ -294,7 +296,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			client = enet_host_create(nullptr, 1, 1, 0, 0);
 		}
 
-		if (connectToServer(client, server, cid, ip))
+		if (connectToServer(client, server, cid, ip, playerName))
 		{
 			joined = true;
 		}
@@ -503,7 +505,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 
 			for (auto &i : players)
 			{
-				i.second.draw(renderer, deltaTime, textures.character);
+				i.second.draw(renderer, deltaTime, textures.character, textures.font);
 			}
 
 			static float timer = 0;

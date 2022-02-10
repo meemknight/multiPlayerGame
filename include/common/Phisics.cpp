@@ -139,7 +139,7 @@ namespace phisics
 
 	}
 
-	void Entity::draw(gl2d::Renderer2D& renderer, float deltaTime, gl2d::Texture characterSprite)
+	void Entity::draw(gl2d::Renderer2D& renderer, float deltaTime, gl2d::Texture characterSprite, gl2d::Font font)
 	{
 
 		glm::vec2 displacement = {};
@@ -153,6 +153,14 @@ namespace phisics
 		renderer.renderRectangle({ (pos+ displacement) * worldMagnification, dimensions * worldMagnification}, glm::vec4(color,1), {}, 0, characterSprite);
 		//renderer.renderRectangle({ pos* worldMagnification, dimensions * worldMagnification}, Colors_Turqoise);
 
+		auto textPos = pos;
+		textPos += displacement;
+		textPos += glm::vec2(dimensions.x / 2.f, -dimensions.y);
+		textPos *= worldMagnification;
+
+		float textSize = dimensions.x;
+
+		renderer.renderText(textPos, name, font, glm::vec4(color, 0.4f), textSize, 4.f, 3.f, true, {}, {});
 	}
 
 	void Entity::checkCollisionBrute(glm::vec2& pos, glm::vec2 lastPos, MapData& mapData, bool& upTouch, bool& downTouch, bool& leftTouch, bool& rightTouch)

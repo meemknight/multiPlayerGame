@@ -13,13 +13,12 @@
 
 gl2d::Renderer2D renderer;
 
-gl2d::Font font;
 Textures textures;
 
 bool initGame()
 {
 	renderer.create();
-	font.createFromFile(RESOURCES_PATH "font/ANDYB.TTF");
+	textures.font.createFromFile(RESOURCES_PATH "font/ANDYB.TTF");
 	textures.sprites.loadFromFileWithPixelPadding(RESOURCES_PATH "jawbreaker_tiles.png", tiles::pixelSize, true, true);
 	textures.character.loadFromFile(RESOURCES_PATH "character.png", true, true);
 	textures.medKit.loadFromFile(RESOURCES_PATH "medkit.png", true, true);
@@ -56,10 +55,15 @@ bool gameLogic(float deltaTime)
 	//2 server
 	static int state = 0;
 	static char ip[17] = {};
+	static char name[playerNameSize] = {};
 	
 	if (state == 0)
 	{
 		glui::Text("Multi player game", Colors_White);
+		glui::Text("Enter your name:", Colors_White);
+
+		glui::InputText("Enter name##1", name, sizeof(name));
+		
 		glui::BeginMenu("Host server", glm::vec4(0, 0, 0, 0), {});
 			//glui::Text(currentIPString.c_str(), Colors_White);
 			if (glui::Button("start", glm::vec4(0, 0, 0, 0)))
@@ -85,18 +89,18 @@ bool gameLogic(float deltaTime)
 			return 0;
 		}
 
-		glui::renderFrame(renderer, font, platform::getRelMousePosition(),
+		glui::renderFrame(renderer, textures.font, platform::getRelMousePosition(),
 			platform::isLMousePressed(), platform::isLMouseHeld(), platform::isLMouseReleased(),
 			platform::isKeyReleased(platform::Button::Escape), platform::getTypedInput(), deltaTime);
 
 	}
 	else if (state == 1)
 	{
-		clientFunction(deltaTime, renderer, textures, ip);
+		clientFunction(deltaTime, renderer, textures, ip, name);
 	}
 	else if (state == 2)
 	{
-		clientFunction(deltaTime, renderer, textures, ip);
+		clientFunction(deltaTime, renderer, textures, ip, name);
 
 
 	}

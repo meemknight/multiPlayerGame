@@ -9,6 +9,7 @@
 #undef max
 
 constexpr float worldMagnification = 48;
+constexpr int playerNameSize = 10;
 
 namespace phisics
 {
@@ -43,6 +44,7 @@ namespace phisics
 	
 	struct Entity
 	{
+		char name[playerNameSize] = {};
 		glm::vec2 pos = {};
 		glm::vec2 lastPos = {};
 		glm::vec2 input = {};
@@ -73,7 +75,7 @@ namespace phisics
 		//should be called only once per frame
 		void updateMove(float deltaTime);
 	
-		void draw(gl2d::Renderer2D& renderer, float deltaTime, gl2d::Texture characterSprite);
+		void draw(gl2d::Renderer2D& renderer, float deltaTime, gl2d::Texture characterSprite, gl2d::Font font);
 	
 	
 	private:
