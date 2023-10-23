@@ -257,6 +257,7 @@ namespace gl2d
 		glm::mat3 getMatrix();
 
 		void follow(glm::vec2 pos, float speed, float max, float w, float h);
+		void clip(glm::vec2 clipSize, glm::vec2 screenSize);
 
 		glm::vec2 convertPoint(const glm::vec2 &p, float windowW, float windowH); //todo move to internal
 	};

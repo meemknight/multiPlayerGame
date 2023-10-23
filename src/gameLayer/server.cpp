@@ -31,7 +31,7 @@ std::vector<glm::ivec2> itemSpawnPosition =
 };
 
 std::vector<phisics::Item> items;
-constexpr int maxItems = 3;
+constexpr int maxItems = 4;
 std::unordered_map<int32_t, Client> connections;
 
 void broadCast(Packet p, void *data, size_t size, ENetPeer *peerToIgnore, bool reliable, int channel)
@@ -205,16 +205,11 @@ void recieveData(ENetHost *server, ENetEvent &event)
 	}
 	else if (p.header == headerSendBullet)
 	{
-		for (auto it = connections.begin(); it != connections.end(); it++)
-		{
-			if (it->second.peer != event.peer)
-			{
-				Packet sPacket;
-				sPacket.header = headerSendBullet;
-				sPacket.cid = p.cid;
-				sendPacket(it->second.peer, sPacket, data, size, true, 1);
-			}
-		}
+		Packet sPacket;
+		sPacket.header = headerSendBullet;
+		sPacket.cid = p.cid;
+		broadCast(sPacket, data, size, event.peer, true, 1);
+
 	}
 	else if (p.header == headerRegisterHit)
 	{
@@ -266,7 +261,7 @@ void serverFunction()
 
 	ENetAddress adress;
 	adress.host = ENET_HOST_ANY;
-	adress.port = 7777;
+	adress.port = 7778;
 	ENetEvent event;
 
 	//first param adress, players limit, channels, bandwith limit
@@ -281,7 +276,7 @@ void serverFunction()
 	while (serverOpen)
 	{
 		int counter = 0;
-		constexpr int maxCounter = 5;
+		constexpr int maxCounter = 10;
 
 		while (enet_host_service(server, &event, 0) > 0 && counter < maxCounter && serverOpen)
 		{
@@ -353,7 +348,7 @@ void serverFunction()
 
 				if (spawnTime <= 0.f)
 				{
-					spawnTime = rand() % 5 + 5;
+					spawnTime = rand() % 5 + 3;
 
 					spawnItem();
 				}

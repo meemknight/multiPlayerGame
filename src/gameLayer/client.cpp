@@ -82,7 +82,7 @@ bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::st
 	}
 	//enet_address_set_host(&adress, "95.76.249.14");
 	//enet_address_set_host(&adress, "192.168.1.11");
-	adress.port = 7777;
+	adress.port = 7778;
 
 	//client, adress, channels, data to send rightAway
 	server = enet_host_connect(client, &adress, SERVER_CHANNELS, 0);
@@ -94,7 +94,6 @@ bool connectToServer(ENetHost *&client, ENetPeer *&server, int32_t &cid, std::st
 
 	//see if we got events by server
 	//client, event, ms to wait(0 means that we don't wait)
-
 	if (enet_host_service(client, &event, 5000) > 0
 		&& event.type == ENET_EVENT_TYPE_CONNECT)
 	{
@@ -479,6 +478,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 	
 	#pragma region player
 		{
+
 			bool playerChaged = 0;
 
 			if (player.input.x != posx || player.input.y != posy)
@@ -500,6 +500,7 @@ void clientFunction(float deltaTime, gl2d::Renderer2D &renderer, Textures textur
 			}
 
 			renderer.currentCamera.follow(player.pos * worldMagnification, deltaTime * 5, 3, renderer.windowW, renderer.windowH);
+			renderer.currentCamera.clip(glm::vec2(map.w, map.h) *worldMagnification, {renderer.windowW, renderer.windowH});
 
 			map.render(renderer, textures.sprites);
 

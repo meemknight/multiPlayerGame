@@ -1712,6 +1712,34 @@ namespace gl2d
 			}
 
 	}
+	
+	void Camera::clip(glm::vec2 clipSize, glm::vec2 screenSize)
+	{
+
+		glm::vec2 cameraPosBottomRight = position + screenSize;
+		
+		if (position.x < 0.f)
+		{
+			position.x = 0.f;
+		}
+
+		if (position.y < 0.f)
+		{
+			position.y = 0.f;
+		}
+
+		if (cameraPosBottomRight.x > clipSize.x) 
+		{
+			position.x = clipSize.x - screenSize.x;
+		}
+
+		if (cameraPosBottomRight.y > clipSize.y)
+		{
+			position.y = clipSize.y - screenSize.y;
+		}
+
+	}
+
 
 	glm::vec2 Camera::convertPoint(const glm::vec2 &p, float windowW, float windowH)
 	{

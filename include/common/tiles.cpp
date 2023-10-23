@@ -22,7 +22,6 @@ namespace tiles
 		return(collisionMap[id] == 'X');
 	}
 
-
 	glm::vec4 getTileUV(int id)
 	{
 		int x = id % width;
